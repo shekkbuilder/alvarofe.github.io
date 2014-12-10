@@ -98,13 +98,41 @@
 
     <span class="post-date">10 Dec 2014</span>
 
-    <div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">show</span>
-  <span class="vi">@widget</span> <span class="o">=</span> <span class="no">Widget</span><span class="p">(</span><span class="n">params</span><span class="o">[</span><span class="ss">:id</span><span class="o">]</span><span class="p">)</span>
-  <span class="n">respond_to</span> <span class="k">do</span> <span class="o">|</span><span class="nb">format</span><span class="o">|</span>
-    <span class="nb">format</span><span class="o">.</span><span class="n">html</span> <span class="c1"># show.html.erb</span>
-    <span class="nb">format</span><span class="o">.</span><span class="n">json</span> <span class="p">{</span> <span class="n">render</span> <span class="ss">json</span><span class="p">:</span> <span class="vi">@widget</span> <span class="p">}</span>
-  <span class="k">end</span>
-<span class="k">end</span></code></pre></div>
+    <p>author: pank4j
+comments: true
+date: 2009-06-30 15:14:29+00:00
+layout: post
+slug: formatshield
+title: &#39;FormatShield: A tool to defend against format string attacks&#39;
+description: &#39;FormatShield: Download formatshield source&#39;
+wordpress_id: 291
+categories:
+- Archive
+tags:
+- binary rewriting
+- format string attacks
+- formatshield</p>
+
+<h2>- memory corruption attacks</h2>
+
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#include &lt;string.h&gt;</span>
+<span class="cp">#include &lt;sys/types.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">gid_t</span> <span class="n">gid</span><span class="p">;</span>
+  <span class="kt">uid_t</span> <span class="n">uid</span><span class="p">;</span>
+  <span class="n">gid</span> <span class="o">=</span> <span class="n">getegid</span><span class="p">();</span>
+  <span class="n">uid</span> <span class="o">=</span> <span class="n">geteuid</span><span class="p">();</span>
+
+  <span class="n">setresgid</span><span class="p">(</span><span class="n">gid</span><span class="p">,</span> <span class="n">gid</span><span class="p">,</span> <span class="n">gid</span><span class="p">);</span>
+  <span class="n">setresuid</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">uid</span><span class="p">);</span>
+
+  <span class="n">system</span><span class="p">(</span><span class="s">&quot;/usr/bin/env echo and now what?&quot;</span><span class="p">);</span>
+<span class="p">}</span></code></pre></div>
 
   </div>
   
