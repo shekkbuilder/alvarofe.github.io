@@ -11,8 +11,8 @@ extensions: [smart]
 
 # Setup
 title:            Álvaro
-tagline:          'Stuff about Security'
-description:      'Stuff about Security'
+tagline:          'Stuff about everything'
+description:      'Stuff about everything'
 url:              http://www.alvarofe.com
 baseurl:          /
 
