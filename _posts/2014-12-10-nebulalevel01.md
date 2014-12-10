@@ -9,7 +9,7 @@ tags:
 - security
 ---
 
-I’ve been reading about security these months ago. I really enjoy learning each day but I think that sometimes is to much theory and I felt the necessity to start practice and gain more confidence about what I was reading. Please you do not misunderstand me, I think that theory plays a main role in security but in the process of learning the practice give you more sight about everything.
+I’ve been reading about security these months ago. I really enjoy learning each day but I think that sometimes is to much theory and I feel the necessity to start practice and gain more confidence about what I was reading. Please you do not misunderstand me, I think that theory plays a main role in security but in the process of learning the practice give you more sight about everything.
 
 Yesterday I downloaded the first virtual machine from [Exploit Exercises](https://exploit-exercises.com). The second exercise show you the next snippet and it encourages you to try find out the vulnerability . 
 
@@ -42,7 +42,7 @@ $ find . -type f -perm +6000 -ls 2> /dev/null
 12962    8 -rwsr-x---   1 flag01   level01      7322 Nov 20  2011 ./flag01
 ```
 
-It is a suid program. It Sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner `flag01`. The main issue with this snippet is when it calls `echo` without specifying the absolute path or using `/usr/bin/env` because otherwise it would have execute the built-in echo. But how it uses`/usr/bin/env` it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.
+It is a suid program. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner `flag01`. The main issue with this snippet is when it calls `echo` without specifying the absolute path or using `/usr/bin/env` because otherwise it would have execute the built-in echo. But how it uses`/usr/bin/env` it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.
 
 ```bash
 $ echo '/bin/sh' > /path/echo
