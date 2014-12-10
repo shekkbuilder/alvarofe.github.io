@@ -98,31 +98,24 @@
 
     <span class="post-date">30 Jun 2009</span>
 
-    <p>“””</p>
+    <div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#include &lt;string.h&gt;</span>
+<span class="cp">#include &lt;sys/types.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
 
-<h1>include <stdlib.h></h1>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">gid_t</span> <span class="n">gid</span><span class="p">;</span>
+  <span class="kt">uid_t</span> <span class="n">uid</span><span class="p">;</span>
+  <span class="n">gid</span> <span class="o">=</span> <span class="n">getegid</span><span class="p">();</span>
+  <span class="n">uid</span> <span class="o">=</span> <span class="n">geteuid</span><span class="p">();</span>
 
-<h1>include <unistd.h></h1>
+  <span class="n">setresgid</span><span class="p">(</span><span class="n">gid</span><span class="p">,</span> <span class="n">gid</span><span class="p">,</span> <span class="n">gid</span><span class="p">);</span>
+  <span class="n">setresuid</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">uid</span><span class="p">);</span>
 
-<h1>include <string.h></h1>
-
-<h1>include <sys/types.h></h1>
-
-<h1>include <stdio.h></h1>
-
-<p>int main(int argc, char *<em>argv, char *</em>envp)
-{
-  gid<em>t gid;
-  uid</em>t uid;
-  gid = getegid();
-  uid = geteuid();</p>
-
-<p>setresgid(gid, gid, gid);
-  setresuid(uid, uid, uid);</p>
-
-<p>system(&quot;/usr/bin/env echo and now what?&quot;);
-“””</p>
-
+  <span class="n">system</span><span class="p">(</span><span class="s">&quot;/usr/bin/env echo and now what?&quot;</span><span class="p">);</span>
+</code></pre></div>
   </div>
   
 </div>
