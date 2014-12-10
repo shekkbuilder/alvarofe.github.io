@@ -1,4 +1,5 @@
-author: pank4j
+---
+author: alvaro
 comments: true
 date: 2009-06-30 15:14:29+00:00
 layout: post
@@ -16,7 +17,7 @@ tags:
 ---
 
 
-{% highlight C %}
+“””
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -34,4 +35,4 @@ int main(int argc, char **argv, char **envp)
   setresuid(uid, uid, uid);
 
   system("/usr/bin/env echo and now what?");
-}{% endhighlight %}
+“””
