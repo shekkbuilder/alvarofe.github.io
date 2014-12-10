@@ -13,7 +13,7 @@ extensions: [smart]
 title:            Álvaro
 tagline:          'Stuff about everything'
 description:      'Stuff about everything'
-url:              http://www.alvarofe.com
+url:              http://alvarofe.github.io 
 baseurl:          /
 
 author:
@@ -27,5 +27,6 @@ version:          2.1.0
 
 github:
   repo:           https://github.com/alvarofe
+
 
 
