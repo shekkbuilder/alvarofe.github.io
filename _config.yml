@@ -1,0 +1,29 @@
+# Dependencies
+markdown:         redcarpet
+pygments:         true
+
+# Permalinks
+#permalink:        pretty
+permalink: /posts/:title
+#auto: true
+rdiscount:
+extensions: [smart]
+
+# Setup
+title:            Álvaro
+tagline:          'Stuff about Security'
+description:      'Stuff about Security'
+url:              http://www.alvarofe.com
+baseurl:          /
+
+author:
+  name:           'Álvaro Felipe Melchor'
+  url:            https://twitter.com/alvaro_fe
+
+paginate:         2
+
+# Custom vars
+version:          2.1.0
+
+github:
+  repo:           https://github.com/alvarofe
