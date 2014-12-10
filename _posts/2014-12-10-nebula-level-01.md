@@ -1,32 +1,9 @@
----
-author: alvaro_fe
-comments: true
-date: 2014-12-10 20:25:34
-layout: post
-title: ‘Resolution to Nebula level 01’
-categories:
-- Archive
-tags:
-- security
----
-
-{% highlight c %}
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <stdio.h>
-
-int main(int argc, char **argv, char **envp)
-{
-  gid_t gid;
-  uid_t uid;
-  gid = getegid();
-  uid = geteuid();
-
-  setresgid(gid, gid, gid);
-  setresuid(uid, uid, uid);
-
-  system("/usr/bin/env echo and now what?");
-}
+{% highlight ruby %}
+def show
+  @widget = Widget(params[:id])
+  respond_to do |format|
+    format.html # show.html.erb
+    format.json { render json: @widget }
+  end
+end
 {% endhighlight %}
