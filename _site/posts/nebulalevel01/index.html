@@ -112,11 +112,19 @@
   <span class="n">system</span><span class="p">(</span><span class="s">&quot;/usr/bin/env echo and now what?&quot;</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>Basically the <code>setresgid</code> and <code>setresuid</code> set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. I encourage to read the following <a href="https://www.usenix.org/legacy/event/sec02/full_papers/chen/chen.pdf">paper</a> to understand it better. Perhaps in other post I will write about them, because thanks to the book <a href="http://www.amazon.es/The-Software-Security-Assessment-Vulnerabilities/dp/0321444426">The Art of Software Security Assessment</a> I have learned a little bit about their nuances. In this case the file has an user <code>flag01</code> since if in the terminal we execute we observe.</p>
+<p>Basically the <code>setresgid</code> and <code>setresuid</code> set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. If we look the man pages we can read the following.</p>
+
+<blockquote>
+<p>When  a  normal program is executed, the effective and real user ID of the process are set to the ID of the user executing the file. When a set ID program is executed the real user ID is set to the calling user and the effective user ID corresponds to the set ID bit on the file being executed.</p>
+</blockquote>
+
+<p>We check if the file is a set ID program.</p>
 <div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>find . -type f -perm +6000 -ls 2&gt; /dev/null
 <span class="m">12962</span>    <span class="m">8</span> -rwsr-x---   <span class="m">1</span> flag01   level01      <span class="m">7322</span> Nov <span class="m">20</span>  <span class="m">2011</span> ./flag01
 </code></pre></div>
-<p>It is a suid program. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner <code>flag01</code>. The main issue with this snippet is when it calls <code>echo</code> without specifying the absolute path or using <code>/usr/bin/env</code> because otherwise it would have execute the built-in echo. But how it uses<code>/usr/bin/env</code> it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.</p>
+<p>It is a set ID program. Basically the effective user ID will be the set ID on the file being executed that is the ID from flag01. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner <code>flag01</code>. It seems that the real problem is not here.</p>
+
+<p>The main issue with this snippet is when it calls <code>echo</code> without specifying the absolute path or using <code>/usr/bin/env</code> because otherwise it would have execute the built-in echo. But how it uses<code>/usr/bin/env</code> it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.</p>
 <div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="nb">echo</span> <span class="s1">&#39;/bin/sh&#39;</span> &gt; /path/echo
 <span class="nv">$ </span>chmod +x /path/echo
 <span class="nv">$ PATH</span><span class="o">=</span>/path/:<span class="nv">$PATH</span>
@@ -126,9 +134,9 @@ sh-4.2<span class="err">$</span>
 <p>I know that maybe this exercise is easy but as always we have to start from the beginning and never stop to grow. </p>
 
 <p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel01&text=Nebula Level 01&via=alvaro_fe">share it with your followers</a> 
+<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel01&text=Nebula Level 01&via=alvaro_fe">share it with your followers</a>
 or
-<a href="https://twitter.com/joshualande"> follow me on Twitter</a>!</p>
+<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 
 </div>
 
@@ -150,6 +158,15 @@ or
 <div class="related">
   <h2>Related Posts</h2>
   <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/posts/nebulalevel02">
+            Nebula Level 02
+            <small>11 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
     
   </ul>
 </div>

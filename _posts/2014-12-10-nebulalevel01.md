@@ -35,14 +35,23 @@ int main(int argc, char **argv, char **envp)
 }
 ```
 
-Basically the `setresgid` and `setresuid` set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. I encourage to read the following [paper](https://www.usenix.org/legacy/event/sec02/full_papers/chen/chen.pdf) to understand it better. Perhaps in other post I will write about them, because thanks to the book [The Art of Software Security Assessment](http://www.amazon.es/The-Software-Security-Assessment-Vulnerabilities/dp/0321444426) I have learned a little bit about their nuances. In this case the file has an user `flag01` since if in the terminal we execute we observe.
+Basically the `setresgid` and `setresuid` set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. If we look the man pages we can read the following.
+
+
+>When  a  normal program is executed, the effective and real user ID of the process are set to the ID of the user executing the file. When a set ID program is executed the real user ID is set to the calling user and the effective user ID corresponds to the set ID bit on the file being executed.
+
+
+We check if the file is a set ID program.
+
 
 ```bash
 $ find . -type f -perm +6000 -ls 2> /dev/null
 12962    8 -rwsr-x---   1 flag01   level01      7322 Nov 20  2011 ./flag01
 ```
 
-It is a suid program. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner `flag01`. The main issue with this snippet is when it calls `echo` without specifying the absolute path or using `/usr/bin/env` because otherwise it would have execute the built-in echo. But how it uses`/usr/bin/env` it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.
+It is a set ID program. Basically the effective user ID will be the set ID on the file being executed that is the ID from flag01. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner `flag01`. It seems that the real problem is not here.
+
+The main issue with this snippet is when it calls `echo` without specifying the absolute path or using `/usr/bin/env` because otherwise it would have execute the built-in echo. But how it uses`/usr/bin/env` it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.
 
 ```bash
 $ echo '/bin/sh' > /path/echo
