@@ -10,7 +10,7 @@ rdiscount:
 extensions: [smart]
 
 # Setup
-title:            Álvaro
+title:            Álvaro Felipe Melchor
 tagline:          'Stuff about everything'
 description:      'Stuff about everything'
 url:              http://alvarofe.github.io 
