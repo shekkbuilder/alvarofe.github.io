@@ -11,5 +11,8 @@ I feel confident with Python and C/C++ mostly, but I’m not shy to jump onto ot
 
 If you want to talk with me the fastest way is through <a href="https://twitter.com/alvaro_fe"> Twitter</a>!
 
+{% include google_analytics.html %}
+
+
 
 
