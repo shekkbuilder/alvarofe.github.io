@@ -4,13 +4,95 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2014-12-18T17:01:46+01:00</updated>
+ <updated>2014-12-18T22:51:20+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>How Linux Implements Generic List</title>
+   <link href="http://alvarofe.github.io/posts/doublylist"/>
+   <updated>2014-12-18T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/doublylist</id>
+   <content type="html">&lt;p&gt;I was reading &lt;a href=&quot;http://shop.oreilly.com/product/9780596005658.do&quot;&gt;Understanding the Linux Kernel&lt;/a&gt; about how each process is represented through &lt;code&gt;task_struct&lt;/code&gt; and so on. The kernel uses a lot of struct to represent different kind of data and it uses lists to manage relationship between them. It would be a waste of time that for each kind of struct was necessary develop a new list, functions to handle it … etc. To resolve this, Linux makes use of a generic list. The idea is as follows.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/public/images/linked-list.png&quot; alt=&quot;linked-list&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;If you want that your struct be in a list all what you have to do is include a &lt;code&gt;list_head&lt;/code&gt; inside it. &lt;code&gt;list_head&lt;/code&gt; is defined as follows (I am using the source code of Linux 2.6.0).&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;list_head&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;list_head&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;next&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;prev&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Where &lt;code&gt;next&lt;/code&gt; and &lt;code&gt;prev&lt;/code&gt; point to the next and previous element in the list respectively. The first question that has came to me is how are we able to get the pointer to the real struct if we only have a pointer to &lt;code&gt;list_head&lt;/code&gt;?. The solution provided by Linux is very clever. Before to know is better to have better context about a real struct used by Linux as &lt;code&gt;task_struct&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task_struct&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;volatile&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;    &lt;span class=&quot;cm&quot;&gt;/* -1 unrunnable, 0 runnable, &amp;gt;0 stopped */&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;thread_info&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thread_info&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;atomic_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;usage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;    &lt;span class=&quot;cm&quot;&gt;/* per process flags, defined below */&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ptrace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lock_depth&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;     &lt;span class=&quot;cm&quot;&gt;/* Lock depth */&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;prio&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;static_prio&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;list_head&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;run_list&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;prio_array_t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;array&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sleep_avg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;interactive_credit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;timestamp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;activated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;policy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;cpumask_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cpus_allowed&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time_slice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;first_time_slice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;list_head&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tasks&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;cm&quot;&gt;/* there are more types*/&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;You can see how inside the &lt;code&gt;task_struct&lt;/code&gt; has a member whose name is &lt;code&gt;task&lt;/code&gt; of type &lt;code&gt;list_head&lt;/code&gt;. This is used to track each process that run inside the kernel so through this member we can  retrieve all the process. There is a macro inside the Linux Kernel to run through all the process.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#define next_task(p)    list_entry((p)-&amp;gt;tasks.next, struct task_struct, tasks)&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#define for_each_process(p) \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;    for (p = &amp;amp;init_task ; (p = next_task(p)) != &amp;amp;init_task ; )&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In &lt;code&gt;list_entry&lt;/code&gt; is where we are going to get in this case the pointer to &lt;code&gt;task_struct&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cm&quot;&gt;/**&lt;/span&gt;
+&lt;span class=&quot;cm&quot;&gt; * list_entry - get the struct for this entry&lt;/span&gt;
+&lt;span class=&quot;cm&quot;&gt; * @ptr:    the &amp;amp;struct list_head pointer.&lt;/span&gt;
+&lt;span class=&quot;cm&quot;&gt; * @type:   the type of the struct this is embedded in.&lt;/span&gt;
+&lt;span class=&quot;cm&quot;&gt; * @member: the name of the list_struct within the struct.&lt;/span&gt;
+&lt;span class=&quot;cm&quot;&gt; */&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define list_entry(ptr, type, member) \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;    container_of(ptr, type, member)&lt;/span&gt;
+
+&lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;
+ &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;container_of&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cast&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;member&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;structure&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;out&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;containing&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;structure&lt;/span&gt;
+ &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;
+ &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;ptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pointer&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;member&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+ &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;   &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;container&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;this&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;embedded&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+ &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;member&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;member&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;within&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+ &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;*/&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#define container_of(ptr, type, member) ({          \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;        const typeof( ((type *)0)-&amp;gt;member ) *__mptr = (ptr);    \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;        (type *)( (char *)__mptr - offsetof(type,member) );})&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The magic really happens in &lt;code&gt;container_of&lt;/code&gt; and is really simple. The first line declares &lt;code&gt;__mptr&lt;/code&gt; equal to the type of the &lt;code&gt;member&lt;/code&gt; inside the &lt;code&gt;type&lt;/code&gt; and is assigned &lt;code&gt;ptr&lt;/code&gt; that in our case would be &lt;code&gt;task&lt;/code&gt; of the actual process. The second line   subtract the address of &lt;code&gt;__mptr&lt;/code&gt; the offset between the &lt;code&gt;task_struct&lt;/code&gt; and the member &lt;code&gt;task&lt;/code&gt;, thanks to that you are able to get a reference to the &lt;code&gt;task_struct&lt;/code&gt; through &lt;code&gt;task&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Maybe is a little bit confusing at the beginning but once you get used to it, is very useful since you can apply the same idea to your projects. You should check this out &lt;a href=&quot;https://github.com/torvalds/linux/blob/master/include/linux/list.h&quot;&gt;/include/linux/list.h&lt;/a&gt; and seeing the rest of the functions that Linux uses to manipulate list.&lt;/p&gt;
+
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/doublylist&amp;text=How Linux Implements Generic List&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Stack 0 Protostart</title>
@@ -88,6 +170,11 @@
 you have changed the &lt;span class=&quot;s1&quot;&gt;&amp;#39;modified&amp;#39;&lt;/span&gt; variable
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;If you want to augment your knowledge about stack and how to exploit it I encourage to read the article &lt;a href=&quot;http://q.hscott.net/reads/stack_smashing.pdf&quot;&gt;Smash the Stack For Fun And Profit by Aleph One&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/protostartstack0&amp;text=Stack 0 Protostart&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  

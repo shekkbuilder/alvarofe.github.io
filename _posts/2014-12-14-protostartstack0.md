@@ -98,3 +98,5 @@ you have changed the 'modified' variable
 ```
 
 If you want to augment your knowledge about stack and how to exploit it I encourage to read the article [Smash the Stack For Fun And Profit by Aleph One](http://q.hscott.net/reads/stack_smashing.pdf)
+
+{% include twitter_plug.html %}
