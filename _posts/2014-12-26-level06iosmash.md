@@ -119,7 +119,7 @@ Dump of assembler code for function greetuser:
    0x08048592 <+118>:	ret
 End of assembler dump.
 gdb-peda$ b * 0x0804857e  ; Breakpoint before to call strcat
-gdb-peda$ r AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBB 
+gdb-peda$ r AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBB
 gdb-peda$ x/64xw $esp
 ```
 
@@ -136,7 +136,7 @@ gdb-peda$ searchmem /bin/sh
 Searching for '/bin/sh' in: None ranges
 Found 1 results, display max 1 items:
 libc : 0xb7faafb4 ("/bin/sh")
-``` 
+```
 
 So the beginning of the `argv[1]` must be the direction of `
 exit` and then the direction of the string `/bin/sh` followed by as much data as needed until we reach the return address to overwrite it with the direction of system. To exploit it more easily is better use as language `FRANCAIS` or `DEUTSCH` since that will fill the `greeting` variable with more data. Since with the `english` version the `id` was initialize to `0` making the strcat function stopping when it reaches that value.
