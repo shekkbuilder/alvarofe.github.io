@@ -4,7 +4,7 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2015-02-18T23:01:09+01:00</updated>
+ <updated>2015-02-18T23:02:25+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
@@ -48,7 +48,7 @@
 
 &lt;p&gt;The tool that I developed is a sniffer that listen the network to extract the certificate that is exchanged during the TLS Handshake, to apply these techniques and get a better response and detect possible MITM attacks. Also there is a little framework that provides a means to notify the user about problems related with the authentication. Anyone would be free to add different approaches. I wrote a little python code to send a notification to the Notification Center on Mac OS X. Is possible to write different methodologies to validate a certificate since the project is written to make this easy to accomplish. Check the tool on &lt;a href=&quot;https://github.com/alvarofe/cassle&quot;&gt;cassle&lt;/a&gt;.&lt;/p&gt;
 
-&lt;iframe width=&quot;420&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/iIAdJ92nIgU&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;iframe width=&quot;600&quot; height=&quot;400&quot; src=&quot;https://www.youtube.com/embed/iIAdJ92nIgU&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;
 
 &lt;p&gt;I had thought to take it to another level and insted of listen the network since I do not have any possibility to shutdown the connection make it more active. I had thought to write a library to hook or extend the OpenSSL library to include these methodologies. But it turns out that there were others that had thought the same and the result is the following &lt;a href=&quot;https://github.com/iSECPartners/publications/blob/master/whitepapers/certshim_ccs14.pdf?raw=true&quot;&gt;CERTSHIM&lt;/a&gt;. I will try to look more close at it and learning how they are doing it :).&lt;/p&gt;
 
