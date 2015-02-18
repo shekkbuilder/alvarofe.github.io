@@ -4,13 +4,66 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2015-02-09T20:54:15+01:00</updated>
+ <updated>2015-02-18T21:22:09+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>TLS and PKI</title>
+   <link href="http://alvarofe.github.io/posts/TLS"/>
+   <updated>2015-02-18T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/TLS</id>
+   <content type="html">&lt;p&gt;Today we are going to talk about TLS and its nuances when the authentication takes place. For those who do not know my master thesis work was about this topic. TLS is likely to be the security protocol most used on Internet. TLS aims to provide: confidentiality, authentication and integrity. If one of these properties are not achieved our security is useless. No matter what strong our cipher be if we are talking with the wrong guy, I mean, if we talk with Facebook or whatever server we must ensure that we are talking with the right entity. TLS besides troubles with authentication also has had troubles with encryption, implementation and many others but today I am only going to write about authentication.&lt;/p&gt;
+
+&lt;p&gt;When we connect to a server using TLS, previous to exchange data that belongs to the application, it starts a phase; whose name is Handshake Protocol, to stablish parameters of the communication as though: TLS version, algorithms, master-secret ... etc.  &lt;img src=&quot;http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0402.png&quot; alt=&quot;handshake&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;One of those messages aims to authenticate the server. This message is the certificate, but it is composed of various certificates forming a chain. &lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0405.png&quot; alt=&quot;chain-trust&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;The client to be sure that it&amp;#39;s talking with the real server validates that certificate using PKI. Basically it ensures that the certificate belongs to the domain that the user had connected, is not expired, is not revoked and is signed by a root certificate that belongs to a CA -Certificate Authority-. These root certificates are trusted by anyone on Internet. The danger of this is that any CA can issue certificates for whatever domain and everything is correct. What would happen if a CA is compromised? The answer of this is simple; the attacker has the ability to issue valid certificates for Google, Facebook domain for example. This has happened in the past like &lt;a href=&quot;http://en.wikipedia.org/wiki/DigiNotar&quot;&gt;DigiNotar&lt;/a&gt;. There are other issues with authentication on TLS related for example with the &lt;a href=&quot;https://www.imperialviolet.org/2014/04/19/revchecking.html&quot;&gt;revocation status&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Despite this wild environment where TLS is working now, there are new technologies that have emerged to try fix some issues. That has been my work during my master thesis; a study of each of the brand technologies, although some of them have been for years, to develop a little tool to strengthen the authentication. These technologies are.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;DANE&lt;/li&gt;
+&lt;li&gt;Pinning&lt;/li&gt;
+&lt;li&gt;Certificate Transparency&lt;/li&gt;
+&lt;li&gt;Blacklist&lt;/li&gt;
+&lt;li&gt;ICSI Notary&lt;/li&gt;
+&lt;li&gt;OCSP Checking&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;In internet you may find more information about these technologies but I am going to write a little bit about the most important ones.&lt;/p&gt;
+
+&lt;p&gt;Pinning by now is the most prominent because it reduces the attack surface. Basically pinning saves what it expects to receive. Now if we receive a certificate that belongs to Facebook this must be equal to the saved value if not, we are under attack. The question regarding pinning is about which certificate save. Normally is saved the hash of the SubjectPublicKeyInfo of the certificate. The real problem is which certificate on the chain choose. There is another problem with pinning. As client, how can I retrieve that information in a security fashion and trustworthy? In other words the bootstrapping. Pinning is a huge improvement but much works remains to be done. There are options to implement pinning nowadays, one is a draft to bring &lt;a href=&quot;http://tools.ietf.org/html/draft-ietf-websec-key-pinning-21&quot;&gt;Pinning to HTTP&lt;/a&gt; and other is Moxie&amp;#39;s approach that bring Pinning to TLS, whose name is &lt;a href=&quot;https://tack.io&quot;&gt;TACK&lt;/a&gt; (it seems that TACK domain is not longer working).&lt;/p&gt;
+
+&lt;p&gt;DANE brings the pinning information using DNS architecture. But DNS is not secure that is why instead of DNS uses DNSSEC. Regarding DNSSEC many have written &lt;a href=&quot;https://www.imperialviolet.org/2015/01/17/notdane.html&quot;&gt;[1]&lt;/a&gt;&lt;a href=&quot;http://sockpuppet.org/blog/2015/01/15/against-dnssec/&quot;&gt;[2]&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Certificate Transparency is a proposal by Google that tired of seeing CA compromised or rogue, decided to build a huge database of all certificates to try monitor them with the aim to catch before such certificates misuse. This approach is under experiment although Chrome is forcing to use it by those certificates with EV.&lt;/p&gt;
+
+&lt;p&gt;The tool that I developed is a sniffer that listen the network to extract the certificate that is exchanged during the TLS Handshake, to apply these techniques and get a better response. Also there is a little framework that provides a means to notify the user about problems related with the authentication. Anyone would be free to add different approaches. I wrote a little python code to send a notification to the Notification Center on Mac OS X. Is possible to write different methodologies to validate a certificate since the project is written to make this easy to accomplish. Check the tool on &lt;a href=&quot;https://github.com/alvarofe/cassle&quot;&gt;cassle&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;I had thought to take it to another level and insted of listen the network since I do not have any possibility to shutdown the connection make it more active. I had thought to write a library to hook or extend the OpenSSL library to include these methodologies. But it turns out that there were others that had thought the same and the result is the following &lt;a href=&quot;https://github.com/iSECPartners/publications/blob/master/whitepapers/certshim_ccs14.pdf?raw=true&quot;&gt;CERTSHIM&lt;/a&gt;. I will try to look more close at it and learning how they are doing it :).&lt;/p&gt;
+
+&lt;p&gt;Now I am developing the evolution of cassle and the name is gocassle, basically because is implemented using Golang. Python has some limitations about create concurrency program due to the GIL, since finally all the threads on python are going to be bloqued by GIL and only one will be executed and the idea to create processes is expensive. So I decided to try Golang and the result is that I&amp;#39;m in love with Golang since thanks to goroutines and channels is possible write concurrency program easily and also is a compiled language so the efficiency is going to be better. Golangs remember me write C code and I love it and I wanted to learn it. &lt;/p&gt;
+
+&lt;p&gt;The idea of gocassle is basically build a distributed  system to pin the network. There will be slaves and masters. These slaves are going to listen the network to extract the certificates and send them to the master. The master will have a database with pins obtained from its slaves. After that the slave and other software, could use the master&amp;#39;s database to know about what certificate must be received. &lt;/p&gt;
+
+&lt;p&gt;I do not know to where I&amp;#39;ll get, as have to combine these with other things as find a job, study things and so on. But at least I would like to develop something very easily not very complicated by now, to see the value of the tool. The tool will be at &lt;a href=&quot;https://www.github.com/alvarofe/gocassle&quot;&gt;gocassle&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;If you are interested on TLS I recommend you follow on Twitter or reading in internet about their researches: Moxie Marlanspike, Ivan Ristic and Adam Langley.&lt;/p&gt;
+
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/TLS&amp;text=TLS and PKI&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Level 08 I/O Smash the Stack</title>
@@ -140,7 +193,12 @@ sh-4.2&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;id
 sh-4.2&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;cat /home/level9/.pass
 XXXXXXXXXXX
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;Write a shellcode is a difficult task in which I have to go deeper. This exercise have been very helpful to understand the danger of vtable on C++ and how the classes are represented in memory. We must be careful when we develop software you never know where the danger resides.&lt;/p&gt;
+&lt;p&gt;Write a shellcode is a difficult task in which I have to go deeper. This exercise has been very helpful to understand the danger of vtable on C++ and how the classes are represented in memory. We must be careful when we develop software since you never know where the danger resides.&lt;/p&gt;
+
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&amp;text=Level 08 I/O Smash the Stack&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  
