@@ -9,6 +9,8 @@ I am Álvaro Felipe Melchor. I am an engineer student which tries to finish the 
 
 I feel confident with Python and C/C++ mostly, but I’m not shy to jump onto other languages if the need arises.
 
+[Here](public/pdf/resume.pdf) you can see my résumé.
+
 If you want to talk with me the fastest way is through <a href="https://twitter.com/alvaro_fe"> Twitter</a>!
 
 {% include google_analytics.html %}
