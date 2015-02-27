@@ -4,7 +4,7 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2015-02-25T12:30:03+01:00</updated>
+ <updated>2015-02-27T11:12:07+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
@@ -14,9 +14,9 @@
  
  <entry>
    <title>Defeating qcrk5 crackme</title>
-   <link href="http://alvarofe.github.io/posts/crackme"/>
+   <link href="http://alvarofe.github.io/posts/qcrk5crackme"/>
    <updated>2015-02-25T00:00:00+01:00</updated>
-   <id>http://alvarofe.github.io/posts/crackme</id>
+   <id>http://alvarofe.github.io/posts/qcrk5crackme</id>
    <content type="html">&lt;p&gt;Today I am going to write up about how I resolved this &lt;a href=&quot;http://crackmes.de/users/qnix/qcrk5/&quot;&gt;crackme&lt;/a&gt;. The level of this crackme is easy so it should not be difficult for those with the minimum of knowledge about reversing. This crackme like the majority of them ask for a password that we have to extract it, to bypass the check and win the flag.&lt;/p&gt;
 
 &lt;p&gt;The first task when we face against these challenges is to know the maximum about the binary. Basically the gather information phase.&lt;/p&gt;
@@ -169,7 +169,7 @@ Using 91867153
 Correct, Cracked !!
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;If you liked this post, you can
-&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/crackme&amp;text=Defeating qcrk5 crackme&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/qcrk5crackme&amp;text=Defeating qcrk5 crackme&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
 or
 &lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
