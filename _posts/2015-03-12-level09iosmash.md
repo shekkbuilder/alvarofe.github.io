@@ -2,7 +2,7 @@
 author: alvaro
 comments: true
 layout: post
-title: Format Strings - Level09 smashTheStack
+title: Format Strings - Level09 Smash the Stack
 categories:
 - Archive
 tags:
