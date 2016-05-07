@@ -127,6 +127,7 @@ PLATFORMS
 DEPENDENCIES
   github-pages
   jekyll-paginate
+  kramdown
   pygments.rb
   redcarpet
 

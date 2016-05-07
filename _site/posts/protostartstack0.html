@@ -43,10 +43,10 @@
     <div class="sidebar-about">
       <h1>
         <a href="/">
-          Álvaro Felipe Melchor
+          Álvaro
         </a>
       </h1>
-      <p class="lead">Stuff about everything</p>
+      <p class="lead">Still learning</p>
     </div>
 
     <nav class="sidebar-nav">
@@ -114,32 +114,38 @@
   <p>I have started to play with the protostar VM along with nebula. This VM presents the concept about the memory issues as buffer overflows in stack and in the heap, format string and so on.</p>
 
 <p>The first exercise present a buffer overflow. The code is as follows.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="k">volatile</span> <span class="kt">int</span> <span class="n">modified</span><span class="p">;</span>
-  <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+<pre><code class="language-C">#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdio.h&gt;
 
-  <span class="n">modified</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-  <span class="n">gets</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+int main(int argc, char **argv)
+{
+  volatile int modified;
+  char buffer[64];
 
-  <span class="k">if</span><span class="p">(</span><span class="n">modified</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;you have changed the &#39;modified&#39; variable</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Try again?</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
+  modified = 0;
+  gets(buffer);
+
+  if(modified != 0) {
+      printf("you have changed the 'modified' variable\n");
+  } else {
+      printf("Try again?\n");
+  }
+}
+</code></pre>
+
 <p>To resolve this puzzle we should have clear how is carried out the flow execution of a program. In the C language the stack is a structure that is used to pass argument to the function, save return address and also to save the local variables. So in the following C code the stack would be.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="kt">void</span> <span class="nf">func</span><span class="p">(</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">c</span><span class="p">;</span>
-    <span class="k">return</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div><div class="highlight"><pre><code class="language-text" data-lang="text">The stack grows downwards
+
+<pre><code class="language-C">
+void func( int a, int b)
+{
+	int c;
+	return;
+}
+</code></pre>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>The stack grows downwards
 
 +————————————+
 | argument b |  The local variables are saved in reverse order.
@@ -155,9 +161,12 @@
 +————————————+
 |  local c   |
 +————————————+
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>The stack in the main function is.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">+————————————+
+
+<div class="highlighter-rouge"><pre class="highlight"><code>+————————————+
 | argument 2 |  
 +————————————+
 | argument 1 |
@@ -173,20 +182,24 @@
 +————————————+
 |  buffer    |
 +————————————+
-</code></pre></div>
-<p>So if we are able to write more than 64 bytes in buffer we can overwrite the value in <code>modified</code>. But Are we able to achieve that? The answers is yes due to the code is using an insecure function <code>gets</code>. It does not limit the input so we are able to write more than 64 bytes. So with the following we can change the value.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span> <span class="nb">printf</span> <span class="s2">&quot;%065x&quot;</span> 1
+</code></pre>
+</div>
+
+<p>So if we are able to write more than 64 bytes in buffer we can overwrite the value in <code class="highlighter-rouge">modified</code>. But Are we able to achieve that? The answers is yes due to the code is using an insecure function <code class="highlighter-rouge">gets</code>. It does not limit the input so we are able to write more than 64 bytes. So with the following we can change the value.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="gp">$  </span><span class="nb">printf</span> <span class="s2">"%065x"</span> 1
 00000000000000000000000000000000000000000000000000000000000000001
-<span class="nv">$ </span>./stack0
+<span class="gp">$ </span>./stack0
 00000000000000000000000000000000000000000000000000000000000000001
-you have changed the <span class="s1">&#39;modified&#39;</span> variable
-</code></pre></div>
+you have changed the <span class="s1">'modified'</span> variable
+
+</code></pre>
+</div>
+
 <p>If you want to augment your knowledge about stack and how to exploit it I encourage to read the article <a href="http://q.hscott.net/reads/stack_smashing.pdf">Smash the Stack For Fun And Profit by Aleph One</a></p>
 
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/protostartstack0&text=Stack 0 Protostart&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+<p>If you liked this post, you can <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/protostartstack0&amp;text=Stack 0 Protostart&amp;via=alvaro_fe">share it with your followers</a> or <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
 
 </div>
 

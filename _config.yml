@@ -1,9 +1,11 @@
 # Dependencies
 # Gems
 gems: [jekyll-paginate]
-markdown:         redcarpet
-highlighter: pygments
-
+kramdown:
+  # Use GitHub flavored markdown, including triple backtick fenced code blocks
+  input: GFM
+  # Jekyll 3 and GitHub Pages now only support rouge for syntax highlighting
+  syntax_highlighter: rouge
 # Permalinks
 #permalink:        pretty
 permalink: /posts/:title
@@ -12,14 +14,14 @@ rdiscount:
 extensions: [smart]
 
 # Setup
-title:            Álvaro Felipe Melchor
-tagline:          'Stuff about everything'
-description:      'Stuff about everything'
+title:            Álvaro 
+tagline:          ''
+description:      'Still learning'
 url:              http://alvarofe.github.io 
 baseurl:          /
 
 author:
-  name:           'Álvaro Felipe Melchor'
+  name:           'Álvaro'
   url:            https://twitter.com/alvaro_fe
 
 paginate:         2

@@ -107,7 +107,8 @@ We should download the source code of our allocator to know how to make our expl
 wget ftp://g.oswego.edu/pub/misc/malloc-2.6.1.c
 ```
 The most important of the code is.
-```C
+
+```c
 struct malloc_chunk
 {
   size_t size;               /* Size in bytes, including overhead. */
@@ -116,12 +117,12 @@ struct malloc_chunk
   size_t unused;             /* to pad decl to min chunk size */
 };
 
-#define unlink(p)                                                             \
-{                                                                             \
-  mchunkptr Bul = (p)->bk;                                                    \
-  mchunkptr Ful = (p)->fd;                                                    \
-  Ful->bk = Bul;  Bul->fd = Ful;                                              \
-}                                                                             \
+#define unlink(p)                  \
+{                                  \
+  mchunkptr Bul = (p)->bk;         \
+  mchunkptr Ful = (p)->fd;         \
+  Ful->bk = Bul;  Bul->fd = Ful;   \
+}                                  \
 ```
 
 If you read the article that I pointed before you already know why this is important. If not badly done but the idea is how the allocator handle the memory. It handles memory using `malloc_chunk` and depending on whether the memory is allocated or freed its fields have different meanings (take into account the difference between the phrack article and our case).
@@ -142,14 +143,14 @@ nextchunk -> + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
 ```
 The idea will be to overwrite the `size`, `fd` and `bk` on the `nextchunk` to execute `unlink` and get a shell. We can get a shell overwritten this fields because the `unlink` macro is as follows.
 
-``` C
-#define unlink(p)                                                             \
-{                                                                             \
-  mchunkptr BK = (p)->bk;                                                    \
-  mchunkptr FD = (p)->fd;                                                    \
-  FD+8 = BK;  
-  BK+4 = FD;                                                                  \
-}                                                                             \
+```c 
+#define unlink(p)           \
+{                           \
+  mchunkptr BK = (p)->bk;   \
+  mchunkptr FD = (p)->fd;   \
+  FD+8 = BK; 	            \ 
+  BK+4 = FD;                \
+}                           \
 
 ```
 

@@ -11,7 +11,7 @@
 
   <title>
     
-      Álvaro Felipe Melchor &middot; Stuff about everything
+      Álvaro &middot; 
     
     Álvaro Felipe Melchor
   </title>
@@ -43,10 +43,10 @@
     <div class="sidebar-about">
       <h1>
         <a href="/">
-          Álvaro Felipe Melchor
+          Álvaro
         </a>
       </h1>
-      <p class="lead">Stuff about everything</p>
+      <p class="lead">Still learning</p>
     </div>
 
     <nav class="sidebar-nav">
@@ -122,43 +122,59 @@
     <p>Today I am going to write up about how I resolved this <a href="http://crackmes.de/users/qnix/qcrk5/">crackme</a>. The level of this crackme is easy so it should not be difficult for those with the minimum of knowledge about reversing. This crackme like the majority of them ask for a password that we have to extract it, to bypass the check and win the flag.</p>
 
 <p>The first task when we face against these challenges is to know the maximum about the binary. Basically the gather information phase.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">➜  crackmes  file qcrk5
-qcrk5: ELF 32-bit LSB executable, Intel 80386, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, statically linked, <span class="k">for</span> GNU/Linux 2.4.1, stripped
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>➜  crackmes  file qcrk5
+qcrk5: ELF 32-bit LSB executable, Intel 80386, version 1 <span class="o">(</span>SYSV<span class="o">)</span>, statically linked, <span class="k">for </span>GNU/Linux 2.4.1, stripped
+</code></pre>
+</div>
+
 <p>It is a ELF-binary and is statically linked. So far, so good. Now we run strace to look for example what kind of syscall is doing.</p>
-<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="err">➜</span>  <span class="n">crackmes</span>  <span class="n">strace</span> <span class="p">.</span><span class="o">/</span><span class="n">qcrk5</span> <span class="mi">1234</span>
-<span class="n">execve</span><span class="p">(</span><span class="s">&quot;./qcrk5&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;./qcrk5&quot;</span><span class="p">,</span> <span class="s">&quot;1234&quot;</span><span class="p">],</span> <span class="p">[</span><span class="cm">/* 34 vars */</span><span class="p">])</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="err">➜</span>  <span class="n">crackmes</span>  <span class="n">strace</span> <span class="p">.</span><span class="o">/</span><span class="n">qcrk5</span> <span class="mi">1234</span>
+<span class="n">execve</span><span class="p">(</span><span class="s">"./qcrk5"</span><span class="p">,</span> <span class="p">[</span><span class="s">"./qcrk5"</span><span class="p">,</span> <span class="s">"1234"</span><span class="p">],</span> <span class="p">[</span><span class="cm">/* 34 vars */</span><span class="p">])</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="p">[</span> <span class="n">Process</span> <span class="n">PID</span><span class="o">=</span><span class="mi">3869</span> <span class="n">runs</span> <span class="n">in</span> <span class="mi">32</span> <span class="n">bit</span> <span class="n">mode</span><span class="p">.</span> <span class="p">]</span>
-<span class="n">uname</span><span class="p">({</span><span class="n">sys</span><span class="o">=</span><span class="s">&quot;Linux&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s">&quot;alvaro-debian&quot;</span><span class="p">,</span> <span class="p">...})</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">uname</span><span class="p">({</span><span class="n">sys</span><span class="o">=</span><span class="s">"Linux"</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s">"alvaro-debian"</span><span class="p">,</span> <span class="p">...})</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">brk</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>                                  <span class="o">=</span> <span class="mh">0x87fe000</span>
 <span class="n">brk</span><span class="p">(</span><span class="mh">0x881f000</span><span class="p">)</span>                          <span class="o">=</span> <span class="mh">0x881f000</span>
-<span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/urandom&quot;</span><span class="p">,</span> <span class="n">O_RDONLY</span><span class="p">)</span>          <span class="o">=</span> <span class="mi">3</span>
-<span class="n">read</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\277</span><span class="s">Y</span><span class="se">\307</span><span class="s">X&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>                <span class="o">=</span> <span class="mi">4</span>
+<span class="n">open</span><span class="p">(</span><span class="s">"/dev/urandom"</span><span class="p">,</span> <span class="n">O_RDONLY</span><span class="p">)</span>          <span class="o">=</span> <span class="mi">3</span>
+<span class="n">read</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s">"</span><span class="se">\277</span><span class="s">Y</span><span class="se">\307</span><span class="s">X"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>                <span class="o">=</span> <span class="mi">4</span>
 <span class="n">close</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>                                <span class="o">=</span> <span class="mi">0</span>
 <span class="n">ptrace</span><span class="p">(</span><span class="n">PTRACE_TRACEME</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>       <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="n">EPERM</span> <span class="p">(</span><span class="n">Operation</span> <span class="n">not</span> <span class="n">permitted</span><span class="p">)</span>
 <span class="n">exit_group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                           <span class="o">=</span> <span class="o">?</span>
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>It has anti-debugging trick embedded inside the program. So is presumably that when we run the binary using gdb the same thing happens.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">gdb-peda$ r 1234
+
+<div class="highlighter-rouge"><pre class="highlight"><code>gdb-peda$ r 1234
 [Inferior 1 (process 3939) exited with code 01]
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>But with gdb we can bypass the ptrace syscall always returning the good value and that can be achieved writting in .gdbinit the following.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">catch syscall ptrace
+
+<div class="highlighter-rouge"><pre class="highlight"><code>catch syscall ptrace
 commands 1
 set ($eax) = 0
 continue
 end
-</code></pre></div>
-<p>Basically we are going to set up a <a href="https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Catchpoints.html#Set-Catchpoints">catchpoint</a> each time that ptrace is called. Then using <code>commands 1</code> we are saying that each time that the breakpoint with value 1 (that is gonna be the catchpoint) is hit, we set <code>eax</code> to 0 and then continue the execution. Basically each time that ptrace is called is gonna return 0. Thanks to that, we are going to bypass the ptrace check and it lets us debug our binary. We could also bypass the ptrace check using <code>LD_PRELOAD</code> hooking a ptrace call and so on but this one is more easy and quickly to accomplish.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">gdb-peda$ r 1234
+</code></pre>
+</div>
+
+<p>Basically we are going to set up a <a href="https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Catchpoints.html#Set-Catchpoints">catchpoint</a> each time that ptrace is called. Then using <code class="highlighter-rouge">commands 1</code> we are saying that each time that the breakpoint with value 1 (that is gonna be the catchpoint) is hit, we set <code class="highlighter-rouge">eax</code> to 0 and then continue the execution. Basically each time that ptrace is called is gonna return 0. Thanks to that, we are going to bypass the ptrace check and it lets us debug our binary. We could also bypass the ptrace check using <code class="highlighter-rouge">LD_PRELOAD</code> hooking a ptrace call and so on but this one is more easy and quickly to accomplish.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>gdb-peda$ r 1234
 
 Catchpoint 1 (returned from syscall ptrace), 0x0804ea76 in ?? ()
 Using 1234
 Wrong!
 [Inferior 1 (process 4011) exited normally]
-</code></pre></div>
-<p>It&#39;s time to dive in the binary to know what is going on in the main function. You can use either radare2 or Hopper to resolve it. I am going to use both. </p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">➜  crackmes  r2 qcrk5
+</code></pre>
+</div>
+
+<p>It’s time to dive in the binary to know what is going on in the main function. You can use either radare2 or Hopper to resolve it. I am going to use both.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>➜  crackmes  r2 qcrk5
  -- bash: r3: command not found
 [0x08048110]&gt; aa
 Function too big at 0x809824c
@@ -171,9 +187,11 @@ Function too big at 0x809824c
 0x08048160  68  8  fcn.08048160
 0x080481a4  99  6  fcn.080481a4
 0x08048208  306  8  main
-</code></pre></div>
-<p>The main function is located at <code>0x08048208</code> so let&#39;s go ahead and disassemble it.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">[0x08048110]&gt; pdf@main
+</code></pre>
+</div>
+<p>The main function is located at <code class="highlighter-rouge">0x08048208</code> so let’s go ahead and disassemble it.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[0x08048110]&gt; pdf@main
 / (fcn) main 306
 |          ; var int local_8 @ ebp-0x8
 |          ; var int local_4 @ ebp-0x4
@@ -193,9 +211,13 @@ Function too big at 0x809824c
 |          0x08048219    83c00f       add eax, 0xf
 
 ...
-</code></pre></div>
-<p>The output is quite long and I am not going to write it. But for example in <code>0x0804824a</code> it calls a function passing four paramaters <code>0,0,1,0</code> and if <code>eax</code> is less than 0 the function returns. This is basically the ptrace call that stop us to debug the binary. Now I am going to use Hopper since it provides a decompiler that make the work easier for us.</p>
-<div class="highlight"><pre><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">arg0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg2</span><span class="p">)</span> <span class="p">{</span>
+
+</code></pre>
+</div>
+
+<p>The output is quite long and I am not going to write it. But for example in <code class="highlighter-rouge">0x0804824a</code> it calls a function passing four paramaters <code class="highlighter-rouge">0,0,1,0</code> and if <code class="highlighter-rouge">eax</code> is less than 0 the function returns. This is basically the ptrace call that stop us to debug the binary. Now I am going to use Hopper since it provides a decompiler that make the work easier for us.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">arg0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg2</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">esp</span> <span class="o">=</span> <span class="p">(</span><span class="n">esp</span> <span class="o">&amp;</span> <span class="mh">0xfffffff0</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mh">0x1e</span> <span class="o">&gt;&gt;</span> <span class="mh">0x4</span> <span class="o">&lt;&lt;</span> <span class="mh">0x4</span><span class="p">);</span>
     <span class="n">var_4</span> <span class="o">=</span> <span class="mh">0x4b7f3da0</span><span class="p">;</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">sub_804ea50</span><span class="p">(</span><span class="mh">0x0</span><span class="p">,</span> <span class="mh">0x0</span><span class="p">,</span> <span class="mh">0x1</span><span class="p">,</span> <span class="mh">0x0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mh">0x0</span><span class="p">)</span> <span class="p">{</span>
@@ -204,7 +226,7 @@ Function too big at 0x809824c
     <span class="k">else</span> <span class="p">{</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">arg_0</span> <span class="o">!=</span> <span class="mh">0x2</span><span class="p">)</span> <span class="p">{</span>
                     <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="n">arg_4</span><span class="p">;</span>
-                    <span class="n">sub_8049530</span><span class="p">(</span><span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">,</span> <span class="s">&quot;Usage : %s &lt;password&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">eax</span><span class="p">);</span>
+                    <span class="n">sub_8049530</span><span class="p">(</span><span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">,</span> <span class="s">"Usage : %s &lt;password&gt;</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">eax</span><span class="p">);</span>
                     <span class="n">sub_8048c10</span><span class="p">(</span><span class="mh">0x0</span><span class="p">);</span>
             <span class="p">}</span>
             <span class="n">var_8</span> <span class="o">=</span> <span class="n">sub_08048b30</span><span class="p">();</span>
@@ -213,22 +235,27 @@ Function too big at 0x809824c
             <span class="n">var_8</span> <span class="o">=</span> <span class="p">(</span><span class="n">var_8</span> <span class="o">&lt;&lt;</span> <span class="mh">0x8</span><span class="p">)</span> <span class="o">-</span> <span class="n">var_8</span><span class="p">;</span>
             <span class="n">var_8</span> <span class="o">=</span> <span class="n">var_8</span> <span class="o">*</span> <span class="mh">0x909090</span><span class="p">;</span>
             <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">arg_4</span> <span class="o">+</span> <span class="mh">0x4</span><span class="p">);</span>
-            <span class="n">sub_8049530</span><span class="p">(</span><span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">,</span> <span class="s">&quot;Using %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">eax</span><span class="p">);</span>
+            <span class="n">sub_8049530</span><span class="p">(</span><span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">,</span> <span class="s">"Using %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">eax</span><span class="p">);</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">var_4</span> <span class="o">==</span> <span class="n">var_8</span><span class="p">)</span> <span class="p">{</span>
                     <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">;</span>
-                    <span class="n">sub_8049530</span><span class="p">(</span><span class="n">STK33</span><span class="p">,</span> <span class="n">eax</span><span class="p">,</span> <span class="s">&quot;Correct, Cracked !!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+                    <span class="n">sub_8049530</span><span class="p">(</span><span class="n">STK33</span><span class="p">,</span> <span class="n">eax</span><span class="p">,</span> <span class="s">"Correct, Cracked !!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
                     <span class="n">sub_8048c10</span><span class="p">(</span><span class="mh">0x0</span><span class="p">);</span>
             <span class="p">}</span>
             <span class="n">eax</span> <span class="o">=</span> <span class="o">*</span><span class="mh">0x80af3b4</span><span class="p">;</span>
-            <span class="n">sub_8049530</span><span class="p">(</span><span class="n">STK33</span><span class="p">,</span> <span class="n">eax</span><span class="p">,</span> <span class="s">&quot;Wrong!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+            <span class="n">sub_8049530</span><span class="p">(</span><span class="n">STK33</span><span class="p">,</span> <span class="n">eax</span><span class="p">,</span> <span class="s">"Wrong!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
             <span class="n">sub_8048c10</span><span class="p">(</span><span class="mh">0x0</span><span class="p">);</span>
     <span class="p">}</span>
     <span class="n">eax</span> <span class="o">=</span> <span class="n">var_14</span><span class="p">;</span>
     <span class="k">return</span> <span class="n">eax</span><span class="p">;</span>
 <span class="p">}</span>
-</code></pre></div>
-<p>We have to achieve that <code>var_8</code> be equal to <code>0x4b7f3da0</code>. We should know what returns <code>sub_08048b30()</code>. To know that, our best friend as always is gdb.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">gdb-peda$ b *0x08048208
+
+
+</code></pre>
+</div>
+
+<p>We have to achieve that <code class="highlighter-rouge">var_8</code> be equal to <code class="highlighter-rouge">0x4b7f3da0</code>. We should know what returns <code class="highlighter-rouge">sub_08048b30()</code>. To know that, our best friend as always is gdb.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>gdb-peda$ b *0x08048208
 Breakpoint 2 at 0x8048208
 gdb-peda$ r 16
 
@@ -241,39 +268,44 @@ Breakpoint 3 at 0x80482a1
 gdb-peda$ c
 gdb-peda$ p $eax
 $1 = 0x10
-</code></pre></div>
-<p>So <code>var_8</code> is equal to argv[1]. <code>sub_08048b30()</code> must be <code>atoi</code> or other similar function.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#include&lt;stdio.h&gt;</span>
+</code></pre>
+</div>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">var8</span><span class="p">,</span><span class="n">temp</span><span class="p">,</span><span class="n">i</span><span class="p">;</span>
+<p>So <code class="highlighter-rouge">var_8</code> is equal to argv[1]. <code class="highlighter-rouge">sub_08048b30()</code> must be <code class="highlighter-rouge">atoi</code> or other similar function.</p>
 
-  <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mh">0xffffffff</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="n">var8</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mh">0x5</span><span class="p">;</span>
-    <span class="n">var8</span> <span class="o">=</span> <span class="n">var8</span> <span class="o">+</span> <span class="mh">0x60</span><span class="p">;</span>
-    <span class="n">temp</span> <span class="o">=</span> <span class="n">var8</span><span class="p">;</span>
-    <span class="n">var8</span> <span class="o">=</span> <span class="p">(</span> <span class="n">var8</span> <span class="o">&lt;&lt;</span> <span class="mh">0x8</span><span class="p">)</span> <span class="o">-</span> <span class="n">temp</span><span class="p">;</span>
-    <span class="n">var8</span> <span class="o">=</span> <span class="n">var8</span> <span class="o">*</span> <span class="mh">0x909090</span><span class="p">;</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">var8</span> <span class="o">==</span> <span class="mh">0x4b7f3da0</span><span class="p">){</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Key found %u</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
-      <span class="k">return</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div><div class="highlight"><pre><code class="language-text" data-lang="text">➜  /tmp  make pass
+<pre><code class="language-C">#include&lt;stdio.h&gt;
+
+int main(int argc, char **argv)
+{
+  unsigned int var8,temp,i;
+
+  for (i = 0; i &lt; 0xffffffff; i++)
+  {
+    var8 = i + 0x5;
+    var8 = var8 + 0x60;
+    temp = var8;
+    var8 = ( var8 &lt;&lt; 0x8) - temp;
+    var8 = var8 * 0x909090;
+    if( var8 == 0x4b7f3da0){
+      printf("Key found %u\n", i);
+      return(0);
+    }
+  }
+}
+</code></pre>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>➜  /tmp  make pass
 cc     pass.c   -o pass
 ➜  /tmp  ./pass
 Key found 91867153
 ➜  crackmes  ./qcrk5  91867153
 Using 91867153
 Correct, Cracked !!
-</code></pre></div>
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/qcrk5crackme&text=Defeating qcrk5 crackme&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+</code></pre>
+</div>
+
+<p>If you liked this post, you can <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/qcrk5crackme&amp;text=Defeating qcrk5 crackme&amp;via=alvaro_fe">share it with your followers</a> or <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
 
   </div>
   
@@ -288,28 +320,28 @@ or
 
     <p>Today we are going to talk about TLS and its nuances when the authentication takes place. For those who do not know my master thesis work was about this topic. TLS is likely to be the security protocol most used on Internet. TLS aims to provide: confidentiality, authentication and integrity. If one of these properties are not achieved our security is useless. No matter what strong our cipher be if we are talking with the wrong guy, I mean, if we talk with Facebook or whatever server we must ensure that we are talking with the right entity. TLS besides troubles with authentication also has had troubles with encryption, implementation and many others but today I am only going to write about authentication.</p>
 
-<p>When we connect to a server using TLS, previous to exchange data that belongs to the application, it starts a phase; whose name is Handshake Protocol, to establish parameters of the communication as well as: TLS version, algorithms, master-secret ... etc.  <img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0402.png" alt="handshake"></p>
+<p>When we connect to a server using TLS, previous to exchange data that belongs to the application, it starts a phase; whose name is Handshake Protocol, to establish parameters of the communication as well as: TLS version, algorithms, master-secret … etc.  <img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0402.png" alt="handshake" /></p>
 
-<p>One of those messages aims to authenticate the server. This message is the certificate, but it is composed of various certificates forming a chain. </p>
+<p>One of those messages aims to authenticate the server. This message is the certificate, but it is composed of various certificates forming a chain.</p>
 
-<p><img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0405.png" alt="chain-trust"></p>
+<p><img src="http://orm-chimera-prod.s3.amazonaws.com/1230000000545/images/hpbn_0405.png" alt="chain-trust" /></p>
 
-<p>The client to be sure that it&#39;s talking with the real server validates that certificate using PKI. Basically it ensures that the certificate belongs to the domain that the user had connected, is not expired, is not revoked and is signed by a root certificate that belongs to a CA -Certificate Authority-. These root certificates are trusted by anyone on Internet. The danger of this is that any CA can issue certificates for whatever domain and everything is correct. What would happen if a CA is compromised? The answer of this is simple; the attacker has the ability to issue valid certificates for Google&#39;s and  Facebook&#39;s domain for example. This has happened in the past like <a href="http://en.wikipedia.org/wiki/DigiNotar">DigiNotar</a>. There are other issues with authentication in TLS related for example with the <a href="https://www.imperialviolet.org/2014/04/19/revchecking.html">revocation status</a>.</p>
+<p>The client to be sure that it’s talking with the real server validates that certificate using PKI. Basically it ensures that the certificate belongs to the domain that the user had connected, is not expired, is not revoked and is signed by a root certificate that belongs to a CA -Certificate Authority-. These root certificates are trusted by anyone on Internet. The danger of this is that any CA can issue certificates for whatever domain and everything is correct. What would happen if a CA is compromised? The answer of this is simple; the attacker has the ability to issue valid certificates for Google’s and  Facebook’s domain for example. This has happened in the past like <a href="http://en.wikipedia.org/wiki/DigiNotar">DigiNotar</a>. There are other issues with authentication in TLS related for example with the <a href="https://www.imperialviolet.org/2014/04/19/revchecking.html">revocation status</a>.</p>
 
 <p>Despite this wild environment where TLS is working now, there are new technologies that have emerged to try fix some issues. That has been my work during my master thesis; a study of each of the brand technologies, although some of them have been for years, to develop a little tool to strengthen the authentication. These technologies are.</p>
 
 <ul>
-<li>DANE</li>
-<li>Pinning</li>
-<li>Certificate Transparency</li>
-<li>Blacklist</li>
-<li>ICSI Notary</li>
-<li>OCSP Checking</li>
+  <li>DANE</li>
+  <li>Pinning</li>
+  <li>Certificate Transparency</li>
+  <li>Blacklist</li>
+  <li>ICSI Notary</li>
+  <li>OCSP Checking</li>
 </ul>
 
 <p>In internet you may find more information about these technologies but I am going to write a little bit about the most important ones.</p>
 
-<p>Pinning by now is the most prominent because it reduces the attack surface. Basically pinning saves what it expects to receive. Now if we receive a certificate that belongs to Facebook this must be equal to the saved value if not, we are under attack. The question regarding pinning is about which certificate save. Normally is saved the hash of the SubjectPublicKeyInfo of the certificate. The real problem is which certificate on the chain choose. There is another problem with pinning. As client, how can I retrieve that information in a security fashion and trustworthy? In other words the bootstrapping. Pinning is a huge improvement but much works remains to be done. There are options to implement pinning nowadays, one is a draft to bring <a href="http://tools.ietf.org/html/draft-ietf-websec-key-pinning-21">pinning to HTTP</a> and other is Moxie&#39;s approach that bring Pinning to TLS, whose name is <a href="https://tack.io">TACK</a> (it seems that TACK domain is not longer working).</p>
+<p>Pinning by now is the most prominent because it reduces the attack surface. Basically pinning saves what it expects to receive. Now if we receive a certificate that belongs to Facebook this must be equal to the saved value if not, we are under attack. The question regarding pinning is about which certificate save. Normally is saved the hash of the SubjectPublicKeyInfo of the certificate. The real problem is which certificate on the chain choose. There is another problem with pinning. As client, how can I retrieve that information in a security fashion and trustworthy? In other words the bootstrapping. Pinning is a huge improvement but much works remains to be done. There are options to implement pinning nowadays, one is a draft to bring <a href="http://tools.ietf.org/html/draft-ietf-websec-key-pinning-21">pinning to HTTP</a> and other is Moxie’s approach that bring Pinning to TLS, whose name is <a href="https://tack.io">TACK</a> (it seems that TACK domain is not longer working).</p>
 
 <p>DANE brings the pinning information using DNS architecture. But DNS is not secure that is why instead of DNS uses DNSSEC. Regarding DNSSEC many have been written <a href="https://www.imperialviolet.org/2015/01/17/notdane.html">[1]</a><a href="http://sockpuppet.org/blog/2015/01/15/against-dnssec/">[2]</a>.</p>
 
@@ -317,22 +349,20 @@ or
 
 <p>The tool that I developed is a sniffer that listen the network to extract the certificate that is exchanged during the TLS Handshake, to apply these techniques and get a better response and detect possible MITM attacks. Also there is a little framework that provides a means to notify the user about problems related with the authentication. Anyone would be free to add different approaches. I wrote a little python code to send a notification to the Notification Center on Mac OS X. Is possible to write different methodologies to validate a certificate since the project is written to make this easy to accomplish. Check the tool on <a href="https://github.com/alvarofe/cassle">cassle</a>.</p>
 
-<iframe width="600" height="400" src="https://www.youtube.com/embed/iIAdJ92nIgU" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="400" src="https://www.youtube.com/embed/iIAdJ92nIgU" frameborder="0" allowfullscreen=""></iframe>
 
 <p>I had thought to take it to another level and insted of listen the network since I do not have any possibility to shutdown the connection make it more active. I had thought to write a library to hook or extend the OpenSSL library to include these methodologies. But it turns out that there were others that had thought the same and the result is the following <a href="https://github.com/iSECPartners/publications/blob/master/whitepapers/certshim_ccs14.pdf?raw=true">CERTSHIM</a>. I will try to look more close at it and learning how they are doing it :).</p>
 
-<p>Now I am developing the evolution of cassle and the name is gocassle, basically because is implemented using Golang. Python has some limitations about create concurrency program due to the GIL, since finally all the threads on python are going to be bloqued by GIL and only one will be executed and the idea to create processes is expensive. So I decided to try Golang and the result is that I&#39;m in love with Golang since thanks to goroutines and channels is possible write concurrency program easily and also is a compiled language so the efficiency is going to be better. Golangs remember me write C code and I love it and I wanted to learn it. </p>
+<p>Now I am developing the evolution of cassle and the name is gocassle, basically because is implemented using Golang. Python has some limitations about create concurrency program due to the GIL, since finally all the threads on python are going to be bloqued by GIL and only one will be executed and the idea to create processes is expensive. So I decided to try Golang and the result is that I’m in love with Golang since thanks to goroutines and channels is possible write concurrency program easily and also is a compiled language so the efficiency is going to be better. Golangs remember me write C code and I love it and I wanted to learn it.</p>
 
-<p>The idea of gocassle is basically build a distributed  system to pin the network. There will be slaves and masters. These slaves are going to listen the network to extract the certificates and send them to the master. The master will have a database with pins obtained from its slaves. After that the slave and other software, could use the master&#39;s database to know about what certificate must be received. </p>
+<p>The idea of gocassle is basically build a distributed  system to pin the network. There will be slaves and masters. These slaves are going to listen the network to extract the certificates and send them to the master. The master will have a database with pins obtained from its slaves. After that the slave and other software, could use the master’s database to know about what certificate must be received.</p>
 
-<p>I do not know to where I&#39;ll get, as have to combine these with other things as find a job, study things and so on. But at least I would like to develop something very easily not very complicated by now, to see the value of the tool. The tool will be at <a href="https://www.github.com/alvarofe/gocassle">gocassle</a>.</p>
+<p>I do not know to where I’ll get, as have to combine these with other things as find a job, study things and so on. But at least I would like to develop something very easily not very complicated by now, to see the value of the tool. The tool will be at <a href="https://www.github.com/alvarofe/gocassle">gocassle</a>.</p>
 
 <p>If you are interested on TLS I recommend you follow on Twitter or reading in internet about their researches: Moxie Marlinspike, Ivan Ristic and Adam Langley.</p>
 
-<p>If you liked this post, you can
-<a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/TLS&text=TLS and PKI&via=alvaro_fe">share it with your followers</a>
-or
-<a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+<p>If you liked this post, you can <a href="https://twitter.com/intent/tweet/?url=http://alvarofe.github.io/posts/TLS&amp;text=TLS and PKI&amp;via=alvaro_fe">share it with your followers</a> or <a href="https://twitter.com/alvaro_fe"> follow me on Twitter</a>!</p>
+
 
   </div>
   
@@ -348,6 +378,7 @@ or
     
   
 </div>
+
     </div>
 
     

